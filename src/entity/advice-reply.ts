@@ -12,7 +12,7 @@ export default class AdviceReply {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ default: 0 })
   pid: number;
 
   // @Column()
@@ -38,7 +38,7 @@ export default class AdviceReply {
 
   @ManyToOne(
     type => LegalAdvice,
-    legal_advice => legal_advice.replies
+    adivice => adivice.replies
   )
-  legal_advice: LegalAdvice;
+  advice: LegalAdvice;
 }

@@ -8,6 +8,16 @@ const legalAdvice = [
     action: LegalAdviceController.addAdvice
   },
   {
+    path: "/replyAdvice",
+    method: "post",
+    action: LegalAdviceController.replyAdvice
+  },
+  {
+    path: "/getAdviceDetail",
+    method: "post",
+    action: LegalAdviceController.getAdviceDetail
+  },
+  {
     path: "/getCustomerAllAdvices",
     method: "post",
     action: LegalAdviceController.getCustomerAllAdvices
@@ -16,11 +26,6 @@ const legalAdvice = [
     path: "/getAllAdvices",
     method: "get",
     action: LegalAdviceController.getAllAdvices
-  },
-  {
-    path: "/replyAdvice",
-    method: "post",
-    action: LegalAdviceController.replyAdvice
   }
 ];
 

@@ -27,7 +27,7 @@ export default class LegalAdvice {
 
   @OneToMany(
     type => AdviceReply,
-    reply => reply.legal_advice
+    reply => reply.advice
   )
-  replies: AdviceReply;
+  replies: AdviceReply[];
 }

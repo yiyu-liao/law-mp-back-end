@@ -14,7 +14,7 @@ export default class LegalAdviceService {
   }
 
   static async getCustomerAllAdvices(context?: Context) {
-    const Rep = this.getRepository(LegalAdvice);
+    const Repo = this.getRepository(LegalAdvice);
 
     const { c_id } = context.request.body;
 
@@ -27,7 +27,7 @@ export default class LegalAdviceService {
     }
 
     try {
-      let result = await Rep.find({
+      let result = await Repo.find({
         where: {
           c_id
         }
@@ -48,10 +48,10 @@ export default class LegalAdviceService {
   }
 
   static async getAllAdvices(context?: Context) {
-    const Rep = this.getRepository(LegalAdvice);
+    const Repo = this.getRepository(LegalAdvice);
 
     try {
-      let result = await Rep.find();
+      let result = await Repo.find();
 
       return {
         code: 200,
@@ -68,7 +68,7 @@ export default class LegalAdviceService {
   }
 
   static async getAdviceDetail(context?: Context) {
-    const Rep = this.getRepository(LegalAdvice);
+    const Repo = this.getRepository(LegalAdvice);
 
     const { id } = context.request.body;
 
@@ -81,13 +81,14 @@ export default class LegalAdviceService {
     }
 
     try {
-      const advice = await Rep.findOne(id, { relations: ["replies"] });
+      const advice = await Repo.findOne(id, { relations: ["replies"] });
       return {
         code: 200,
         data: advice,
         msg: null
       };
     } catch (e) {
+      console.log(e)
       const error = {
         code: e.code,
         msg: e.message
@@ -97,10 +98,10 @@ export default class LegalAdviceService {
   }
 
   static async addAdvice(context?: Context) {
-    const Rep = this.getRepository(LegalAdvice);
+    const Repo = this.getRepository(LegalAdvice);
 
     const { c_id, topic, content } = context.request.body;
-
+    c_id
     if (!c_id || !topic || !content) {
       const error = {
         code: RequesetErrorCode.PARAMS_ERROR.code,
@@ -115,7 +116,7 @@ export default class LegalAdviceService {
     advice.content = content;
 
     try {
-      const result = await Rep.save(advice);
+      const result = await Repo.save(advice);
       return {
         code: 200,
         data: result,
@@ -131,7 +132,6 @@ export default class LegalAdviceService {
   }
 
   static async replyAdvice(context?: Context) {
-    const AdviceRep = this.getRepository(LegalAdvice);
     const ReplyRep = this.getRepository(AdviceReply);
 
     const {
@@ -147,6 +147,8 @@ export default class LegalAdviceService {
     let reply = new AdviceReply();
     let advice = new LegalAdvice();
 
+    advice.id = advice_id;
+
     reply.pid = pid;
     reply.content = content;
     reply.from_id = from_id;
@@ -154,12 +156,13 @@ export default class LegalAdviceService {
     reply.to_id = to_id;
     reply.to_name = to_name;
 
+    reply.advice = advice;
+
     try {
       // TO DO: review
       await ReplyRep.save(reply);
-      advice.id = advice_id;
 
-      await AdviceRep.merge(advice, { replies: reply });
+      // await AdviceRep.update(advice_id, { replies: reply });
 
       return {
         code: 200,
