@@ -14,10 +14,7 @@ export default class LegalAdvice {
   id: number;
 
   @Column()
-  c_id: number;
-
-  // @Column({ type: "simple-array", default: null })
-  // l_ids: number[];
+  c_openid: number;
 
   @Column()
   topic: string;

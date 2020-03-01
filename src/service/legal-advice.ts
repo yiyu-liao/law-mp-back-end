@@ -16,9 +16,9 @@ export default class LegalAdviceService {
   static async getCustomerAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
-    const { c_id } = context.request.body;
+    const { c_openid } = context.request.body;
 
-    if (!c_id) {
+    if (!c_openid) {
       const error = {
         code: RequesetErrorCode.PARAMS_ERROR.code,
         msg: RequesetErrorCode.PARAMS_ERROR.msg
@@ -29,7 +29,7 @@ export default class LegalAdviceService {
     try {
       let result = await Repo.find({
         where: {
-          c_id
+          c_openid
         }
       });
 
@@ -100,9 +100,8 @@ export default class LegalAdviceService {
   static async addAdvice(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
-    const { c_id, topic, content } = context.request.body;
-    c_id
-    if (!c_id || !topic || !content) {
+    const { c_openid, topic, content } = context.request.body;
+    if (!c_openid || !topic || !content) {
       const error = {
         code: RequesetErrorCode.PARAMS_ERROR.code,
         msg: RequesetErrorCode.PARAMS_ERROR.msg
@@ -111,7 +110,7 @@ export default class LegalAdviceService {
     }
 
     let advice = new LegalAdvice();
-    advice.c_id = c_id;
+    advice.c_openid = c_openid;
     advice.topic = topic;
     advice.content = content;
 
@@ -138,9 +137,9 @@ export default class LegalAdviceService {
       advice_id,
       pid,
       content,
-      from_id,
+      from_openid,
       from_name,
-      to_id,
+      to_openid,
       to_name
     } = context.request.body;
 
@@ -151,9 +150,9 @@ export default class LegalAdviceService {
 
     reply.pid = pid;
     reply.content = content;
-    reply.from_id = from_id;
+    reply.from_openid = from_openid;
     reply.from_name = from_name;
-    reply.to_id = to_id;
+    reply.to_openid = to_openid;
     reply.to_name = to_name;
 
     reply.advice = advice;

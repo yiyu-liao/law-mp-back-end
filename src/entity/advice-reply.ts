@@ -22,13 +22,13 @@ export default class AdviceReply {
   content: string;
 
   @Column()
-  from_id: string;
+  from_openid: string;
 
   @Column()
   from_name: string;
 
   @Column()
-  to_id: string;
+  to_openid: string;
 
   @Column()
   to_name: string;
