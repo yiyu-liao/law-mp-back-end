@@ -6,6 +6,15 @@ import { RequesetErrorCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
 export default class UserService {
+  /**
+     * @api {post} /getUserInfo 获取用户信息
+     * @apiName getUserInfo
+     * @apiGroup User
+     *
+     * @apiParam {Number} c_openid  用户唯一openid.
+     *
+     * @apiSuccess {String} code 200
+     */
   static async getUserInfo(context?: Context) {
     const userRepository = getManager().getRepository(User);
 
@@ -36,6 +45,18 @@ export default class UserService {
       throw new HttpException(error);
     }
   }
+
+   /**
+     * @api {post} /register 注册新用户
+     * @apiName register
+     * @apiGroup User
+     *
+     * @apiParam {Number} c_openid  用户唯一openid.
+     * @apiParam {Number} role  用户角色，0为普通客户，1为律师，3为管理员
+     * @apiParam {String} name  用户名称
+     *
+     * @apiSuccess {String} code 200
+     */
 
   static async register(context?: Context) {
     const userRepository = getManager().getRepository(User);

@@ -13,6 +13,15 @@ export default class LegalAdviceService {
     return getManager().getRepository(entity);
   }
 
+  /**
+     * @api {post} /getCustomerAllAdvices 通过openid获取客户所有咨询列表
+     * @apiName getCustomerAllAdvices
+     * @apiGroup Legal Advice
+     *
+     * @apiParam {Number} c_openid  客户唯一openid.
+     *
+     * @apiSuccess {String} code 200
+   */
   static async getCustomerAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -47,6 +56,15 @@ export default class LegalAdviceService {
     }
   }
 
+   /**
+     * @api {get} /getAllAdvices 获取系统所有咨询列表
+     * @apiName getAllAdvices
+     * @apiGroup Legal Advice
+     *
+     *
+     * @apiSuccess {String} code 200
+     * @apiSuccess {Array} data []
+   */
   static async getAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -67,6 +85,16 @@ export default class LegalAdviceService {
     }
   }
 
+   /**
+     * @api {post} /getAdviceDetail 获取详情咨询详情
+     * @apiName getAdviceDetail
+     * @apiGroup Legal Advice
+     *
+    * @apiParam {Number} id  咨询id
+
+     * @apiSuccess {String} code 200
+     * @apiSuccess {Array} data []
+   */
   static async getAdviceDetail(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -97,6 +125,19 @@ export default class LegalAdviceService {
     }
   }
 
+
+   /**
+     * @api {post} /addAdvice 客户发布咨询
+     * @apiName addAdvice
+     * @apiGroup Legal Advice
+     *
+     * @apiParam {Number} c_openid  发布者c_openid
+     * @apiParam {Number} topic  咨询主题
+     * @apiParam {content} content  咨询内容
+
+     *
+     * @apiSuccess {String} code 200
+   */
   static async addAdvice(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -130,6 +171,23 @@ export default class LegalAdviceService {
     }
   }
 
+
+  /**
+     * @api {post} /replyAdvice 回复咨询
+     * @apiName replyAdvice
+     * @apiGroup Legal Advice
+     *
+     * @apiParam {Number} advice_id  咨询id
+     * @apiParam {Number} pid  回复目标评论的id, 若是目标是咨询内容，pid为0
+     * @apiParam {content} content  回复内容
+     * @apiParam {content} from_openid  回复者openid
+     * @apiParam {content} from_name  回复者名字
+     * @apiParam {content} to_openid  被回复者openid
+     * @apiParam {content} to_name  被回复者名字
+
+     *
+     * @apiSuccess {String} code 200
+   */
   static async replyAdvice(context?: Context) {
     const ReplyRep = this.getRepository(AdviceReply);
 
@@ -158,10 +216,7 @@ export default class LegalAdviceService {
     reply.advice = advice;
 
     try {
-      // TO DO: review
       await ReplyRep.save(reply);
-
-      // await AdviceRep.update(advice_id, { replies: reply });
 
       return {
         code: 200,
