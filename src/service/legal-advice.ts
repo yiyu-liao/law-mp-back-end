@@ -20,7 +20,7 @@ export default class LegalAdviceService {
      * @apiGroup Legal Advice
      *
      * @apiParam {Number} c_openid  发布者c_openid
-     * @apiParam {Number} topic  咨询主题
+     * @apiParam {Number} topic  咨询主题。0 => 民事代理, 1 => 商事纠纷, 2 => 刑事辩护, 3 => 行政诉讼
      * @apiParam {content} content  咨询内容
 
      *

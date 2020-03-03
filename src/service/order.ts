@@ -19,18 +19,20 @@ export default class OrderService {
      * @apiGroup Order
      *
      * @apiParam {Number} c_openid  客户唯一openid.
-     * @apiParam {String} description 客户需要填写等文字描述.
-     * @apiParam {Number} response_time 客户要求的响应时间.
-     * @apiParam {Number} limit_time 客户要求的完成期限.
+     * @apiParam {Number} order_type  订单类型，0 => 文书起草，1 => 案件委托， 2 => 法律顾问， 3 => 案件查询
+     * @apiParam {Object} extra_info 自定义的表单提交数据
+     * @apiParam {String} description 客户需要填写等文字描述
+     * @apiParam {Number} response_time 客户要求的响应时间
+     * @apiParam {Number} limit_time 客户要求的完成期限
      *
      * @apiSuccess {String} code 200
      */
     static async publishOrder(context?: Context) {
         const Repo = this.getRepository(Order);
 
-        const { c_openid, description, response_time, limit_time } = context.request.body;
+        const { c_openid, order_type, description, extra_info, response_time, limit_time } = context.request.body;
 
-        if (!c_openid || !description || !response_time || !limit_time) {
+        if (!c_openid || !order_type || !description || !response_time || !limit_time) {
             const error = {
                 code: RequesetErrorCode.PARAMS_ERROR.code,
                 msg: RequesetErrorCode.PARAMS_ERROR.msg
@@ -40,6 +42,8 @@ export default class OrderService {
 
         const order = new Order();
         order.c_openid = c_openid;
+        order.order_type = order_type;
+        order.extra_info = extra_info;
         order.description = description;
         order.response_time = response_time;
         order.limit_time = limit_time;

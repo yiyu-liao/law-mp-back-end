@@ -7,7 +7,8 @@ export enum ORDER_STATUS {
     pending = 1,
     processing = 2,
     complete = 3,
-    appeal = 4
+    appeal = 4,
+    cancel = 5
 }
 
 @Entity()
@@ -19,6 +20,9 @@ export default class LegalOrder {
     c_openid: number;
 
     @Column()
+    order_type: number;
+
+    @Column()
     description: string;
 
     @Column()
@@ -26,6 +30,9 @@ export default class LegalOrder {
 
     @Column()
     limit_time: number;
+
+    @Column({ type: "simple-json", default: null })
+    extra_info: any;
 
     @Column({ default: null })
     winner_openid: number;
