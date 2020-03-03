@@ -13,122 +13,10 @@ export default class LegalAdviceService {
     return getManager().getRepository(entity);
   }
 
+
   /**
-     * @api {post} /getCustomerAllAdvices 通过openid获取客户所有咨询列表
-     * @apiName getCustomerAllAdvices
-     * @apiGroup Legal Advice
-     *
-     * @apiParam {Number} c_openid  客户唯一openid.
-     *
-     * @apiSuccess {String} code 200
-   */
-  static async getCustomerAllAdvices(context?: Context) {
-    const Repo = this.getRepository(LegalAdvice);
-
-    const { c_openid } = context.request.body;
-
-    if (!c_openid) {
-      const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
-      };
-      throw new HttpException(error);
-    }
-
-    try {
-      let result = await Repo.find({
-        where: {
-          c_openid
-        }
-      });
-
-      return {
-        code: 200,
-        data: result,
-        msg: null
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
-  }
-
-   /**
-     * @api {get} /getAllAdvices 获取系统所有咨询列表
-     * @apiName getAllAdvices
-     * @apiGroup Legal Advice
-     *
-     *
-     * @apiSuccess {String} code 200
-     * @apiSuccess {Array} data []
-   */
-  static async getAllAdvices(context?: Context) {
-    const Repo = this.getRepository(LegalAdvice);
-
-    try {
-      let result = await Repo.find();
-
-      return {
-        code: 200,
-        data: result,
-        msg: null
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
-  }
-
-   /**
-     * @api {post} /getAdviceDetail 获取详情咨询详情
-     * @apiName getAdviceDetail
-     * @apiGroup Legal Advice
-     *
-    * @apiParam {Number} id  咨询id
-
-     * @apiSuccess {String} code 200
-     * @apiSuccess {Array} data []
-   */
-  static async getAdviceDetail(context?: Context) {
-    const Repo = this.getRepository(LegalAdvice);
-
-    const { id } = context.request.body;
-
-    if (!id) {
-      const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
-      };
-      throw new HttpException(error);
-    }
-
-    try {
-      const advice = await Repo.findOne(id, { relations: ["replies"] });
-      return {
-        code: 200,
-        data: advice,
-        msg: null
-      };
-    } catch (e) {
-      console.log(e)
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
-  }
-
-
-   /**
-     * @api {post} /addAdvice 客户发布咨询
-     * @apiName addAdvice
+     * @api {post} /advice/publish 客户发布咨询
+     * @apiName publishAdvice
      * @apiGroup Legal Advice
      *
      * @apiParam {Number} c_openid  发布者c_openid
@@ -138,7 +26,7 @@ export default class LegalAdviceService {
      *
      * @apiSuccess {String} code 200
    */
-  static async addAdvice(context?: Context) {
+  static async publishAdvice(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
     const { c_openid, topic, content } = context.request.body;
@@ -173,7 +61,7 @@ export default class LegalAdviceService {
 
 
   /**
-     * @api {post} /replyAdvice 回复咨询
+     * @api {post} /advice/reply 回复咨询
      * @apiName replyAdvice
      * @apiGroup Legal Advice
      *
@@ -216,11 +104,123 @@ export default class LegalAdviceService {
     reply.advice = advice;
 
     try {
-      await ReplyRep.save(reply);
+      const res = await ReplyRep.save(reply);
 
       return {
         code: 200,
-        data: null,
+        data: res,
+        msg: null
+      };
+    } catch (e) {
+      const error = {
+        code: e.code,
+        msg: e.message
+      };
+      throw new HttpException(error);
+    }
+  }
+
+
+   /**
+     * @api {post} /advice/detail 获取详情咨询详情
+     * @apiName getAdviceDetail
+     * @apiGroup Legal Advice
+     *
+    * @apiParam {Number} id  咨询id
+
+     * @apiSuccess {String} code 200
+     * @apiSuccess {Array} data []
+   */
+  static async getAdviceDetail(context?: Context) {
+    const Repo = this.getRepository(LegalAdvice);
+
+    const { id } = context.request.body;
+
+    if (!id) {
+      const error = {
+        code: RequesetErrorCode.PARAMS_ERROR.code,
+        msg: RequesetErrorCode.PARAMS_ERROR.msg
+      };
+      throw new HttpException(error);
+    }
+
+    try {
+      const advice = await Repo.findOne(id, { relations: ["replies"] });
+      return {
+        code: 200,
+        data: advice,
+        msg: null
+      };
+    } catch (e) {
+      const error = {
+        code: e.code,
+        msg: e.message
+      };
+      throw new HttpException(error);
+    }
+  }
+
+  /**
+     * @api {post} /advice/customer 获取客户咨询列表
+     * @apiName getCustomerAllAdvices
+     * @apiGroup Legal Advice
+     *
+     * @apiParam {Number} openid  客户唯一openid.
+     *
+     * @apiSuccess {String} code 200
+   */
+  static async getCustomerAllAdvices(context?: Context) {
+    const Repo = this.getRepository(LegalAdvice);
+
+    const { openid } = context.request.body;
+
+    if (!openid) {
+      const error = {
+        code: RequesetErrorCode.PARAMS_ERROR.code,
+        msg: RequesetErrorCode.PARAMS_ERROR.msg
+      };
+      throw new HttpException(error);
+    }
+
+    try {
+      let result = await Repo.find({
+        where: {
+          c_openid: openid
+        }
+      });
+
+      return {
+        code: 200,
+        data: result,
+        msg: null
+      };
+    } catch (e) {
+      const error = {
+        code: e.code,
+        msg: e.message
+      };
+      throw new HttpException(error);
+    }
+  }
+
+   /**
+     * @api {get} /advice/all 获取系统所有咨询列表
+     * @apiName getAllAdvices
+     * @apiGroup Legal Advice
+     *
+     *
+     * @apiSuccess {String} code 200
+     * @apiSuccess {Array} data []
+   */
+  static async getAllAdvices(context?: Context) {
+    const Repo = this.getRepository(LegalAdvice);
+
+    try {
+      let result = await Repo.find();
+
+      return {
+        code: 200,
+        data: result,
         msg: null
       };
     } catch (e) {
