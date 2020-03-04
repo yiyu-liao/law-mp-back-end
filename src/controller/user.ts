@@ -1,6 +1,9 @@
 import UserService from "../service/user";
 
 export default class UserController {
+  static async login(ctx) {
+    ctx.body = await UserService.login(ctx);
+  },
   static async register(ctx) {
     ctx.body = await UserService.register(ctx);
   }

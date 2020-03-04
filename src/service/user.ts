@@ -5,7 +5,33 @@ import User from "@src/entity/user";
 import { RequesetErrorCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
+import axios from 'axios';
+import * as Config from '../../config.json';
+
 export default class UserService {
+
+
+    /**
+     * @api {post} /user/login 登录获取openid
+     * @apiName login
+     * @apiGroup User
+     *
+     * @apiParam {Number} js_code, 登录时获取的 code
+     * @apiSuccess {String} code 200
+     */
+    static async login(context?: Context) {
+      const { js_code } = context.request.body;
+      const respone = await axios.get('https://api.weixin.qq.com/sns/jscode2session', {
+        params: {
+          js_code,
+          appid: Config.appid,
+          secret: Config.appSecret,
+          grant_type: 'authorization_code'
+        }
+      });
+
+      return respone;
+    }
 
     /**
      * @api {post} /user/register 注册新用户
@@ -19,7 +45,7 @@ export default class UserService {
      * @apiSuccess {String} code 200
      */
     static async register(context?: Context) {
-     const userRepository = getManager().getRepository(User);
+     const userRepo = getManager().getRepository(User);
   
       const { openid, role, nick_name } = context.request.body;
   
@@ -38,7 +64,7 @@ export default class UserService {
       user.nick_name = nick_name;
   
       try {
-        let result = await userRepository.save(user);
+        let result = await userRepo.save(user);
         return {
           code: 200,
           data: result,
@@ -65,7 +91,7 @@ export default class UserService {
      * 
      */
   static async getUserInfo(context?: Context) {
-    const userRepository = getManager().getRepository(User);
+    const userRepo = getManager().getRepository(User);
 
     const { openid } = context.request.body;
 
@@ -78,7 +104,7 @@ export default class UserService {
     }
 
     try {
-      const user = await userRepository.findOne({ where: { openid } });
+      const user = await userRepo.findOne({ where: { openid } });
       return {
         code: 200,
         data: user,

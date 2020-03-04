@@ -5,10 +5,16 @@ import OrderServer from '@src/controller/order'
 
 const user = [
   {
+    path: "/user/login",
+    method: "get",
+    action: UserController.login
+  },
+  {
     path: "/user/register",
     method: "post",
     action: UserController.register
   },
+  
   {
     path: "/user/detail",
     method: "post",
