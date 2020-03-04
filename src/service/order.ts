@@ -188,10 +188,57 @@ export default class OrderService {
         order.status = ORDER_STATUS.pending;
 
         try {
-            await orderRepo.update(order_id, order);
+            const res = await orderRepo.update(order_id, order);
             return {
                 code: 200,
-                data: {},
+                data: res,
+                msg: ''
+            }
+
+        }catch (e) {
+            const error = {
+                code: e.code,
+                msg: e.message
+            };
+            throw new HttpException(error);
+        }
+    }
+
+    /**
+     * @api {post} /order/updateStatus 更新order状态
+     * @apiName updateStatus
+     * @apiGroup Order
+     *
+     * @apiParam {Number} order_id  订单id.
+     * @apiParam {Number} status  状态值. 抢单中 => 0, 待处理 => 1, 处理中 = 2, 完成 => 3, 申诉 => 4, 取消 => 5
+     *
+     * @apiSuccess {String} code 200
+     */
+    static async changeOrderStatus(ctx: Context) {
+
+        const orderRepo = this.getRepository(Order);
+
+        const { order_id, status } = ctx.request.body;
+
+        // To Review, 判定状态流改变规则
+        // const orderInfo  = await orderRepo.findOne(order_id);
+
+        if (!status) {
+            const error = {
+                code: RequesetErrorCode.PARAMS_ERROR.code,
+                msg: RequesetErrorCode.PARAMS_ERROR.msg
+              };
+              throw new HttpException(error);
+        }
+
+        let order = new Order();
+        order.status = status;
+
+        try {
+            const res = await orderRepo.update(order_id, order);
+            return {
+                code: 200,
+                data: res,
                 msg: ''
             }
 

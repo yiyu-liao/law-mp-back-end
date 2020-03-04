@@ -13,17 +13,17 @@ export default class UserService {
      * @apiGroup User
      *
      * @apiParam {Number} openid  用户唯一openid.
-     * @apiParam {Number} role  用户角色，0为普通客户，1为律师，3为管理员
-     * @apiParam {String} name  用户名称
+     * @apiParam {Number} role  用户角色，0为普通客户，1为律师
+     * @apiParam {String} nick_name  用户名称
      *
      * @apiSuccess {String} code 200
      */
     static async register(context?: Context) {
-      const userRepository = getManager().getRepository(User);
+     const userRepository = getManager().getRepository(User);
   
-      const { openid, role, name } = context.request.body;
+      const { openid, role, nick_name } = context.request.body;
   
-      if (!openid || !role || !name) {
+      if (!openid || !role || !nick_name) {
         const error = {
           code: RequesetErrorCode.PARAMS_ERROR.code,
           msg: RequesetErrorCode.PARAMS_ERROR.msg
@@ -35,7 +35,7 @@ export default class UserService {
   
       user.openid = openid;
       user.role = role;
-      user.name = name;
+      user.nick_name = nick_name;
   
       try {
         let result = await userRepository.save(user);

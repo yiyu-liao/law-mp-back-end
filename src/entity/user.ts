@@ -1,4 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"; 
+
+export interface ILawyerVerifyInfo {
+  real_name: string;
+
+  office: string;
+
+  location: string;
+
+  experience_year: number;
+
+  id_photo: string;
+
+  license_photo: string;
+
+  license_no: string;
+}
 
 @Entity()
 export default class User {
@@ -9,8 +25,17 @@ export default class User {
   openid: string;
 
   @Column()
-  name: string;
+  avatar: string;
 
   @Column()
-  role: number; // 0 => customer, 1 => lawer
+  nick_name: string;
+
+  @Column()
+  role: number; // 0 => customer, 1 => lawyer
+
+  @Column({ default: null })
+  verify_status: number; // 0 => 未认证， 1 => 认证中， 2 => 已认证
+
+  @Column({ type: 'simple-json', default: null })
+  extra_info: ILawyerVerifyInfo;
 }

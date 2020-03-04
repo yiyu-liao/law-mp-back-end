@@ -9,6 +9,7 @@ export default class Bidders {
     @Column()
     price: number;
 
+    // To Review，是否考虑设计成联表查询，拿出userInfo
     @Column()
     l_opendid: number;
 

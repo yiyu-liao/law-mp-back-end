@@ -13,5 +13,8 @@ export default class OrderController {
     static async getOrderDetail(ctx) {
         ctx.body = await OrderServer.getOrderDetail(ctx);
     }
+    static async changeOrderStatus(ctx) {
+        ctx.body = await OrderServer.changeOrderStatus(ctx);
+    }
 
 }

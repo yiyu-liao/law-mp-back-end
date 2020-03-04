@@ -19,7 +19,7 @@ export default class LegalOrder {
     @Column()
     c_openid: number;
 
-    @Column()
+    @Column() // 订单类型，0 => 文书起草，1 => 案件委托， 2 => 法律顾问， 3 => 案件查询
     order_type: number;
 
     @Column()
@@ -31,6 +31,7 @@ export default class LegalOrder {
     @Column()
     limit_time: number;
 
+    // TO DO: add type
     @Column({ type: "simple-json", default: null })
     extra_info: any;
 
