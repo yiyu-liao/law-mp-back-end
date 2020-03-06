@@ -1,36 +1,33 @@
 import { Context } from "koa";
 import { getManager, Repository } from "typeorm";
 import User from "@src/entity/user";
+import WxFormId from "@src/entity/wx-form-id";
 
 import { RequesetErrorCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
-import axios from 'axios';
-import * as Config from '../../config.json';
+import WxService from './wx';
 
 export default class UserService {
 
+    static getRepository<T>(target: any): Repository<T> {
+      return getManager().getRepository(target);
+    }
 
     /**
-     * @api {post} /user/login 登录获取openid
-     * @apiName login
+     * @api {post} /user/authSession 登录获取openid
+     * @apiName authSession
      * @apiGroup User
      *
      * @apiParam {Number} js_code, 登录时获取的 code
      * @apiSuccess {String} code 200
      */
-    static async login(context?: Context) {
+    static async authSession(context?: Context) {
       const { js_code } = context.request.body;
-      const respone = await axios.get('https://api.weixin.qq.com/sns/jscode2session', {
-        params: {
-          js_code,
-          appid: Config.appid,
-          secret: Config.appSecret,
-          grant_type: 'authorization_code'
-        }
-      });
 
-      return respone;
+      const res = await WxService.authCode2Session(js_code);      
+      
+      return res.data;
     }
 
     /**
@@ -45,7 +42,7 @@ export default class UserService {
      * @apiSuccess {String} code 200
      */
     static async register(context?: Context) {
-     const userRepo = getManager().getRepository(User);
+     const userRepo = this.getRepository<User>(User);
   
       const { openid, role, nick_name } = context.request.body;
   
@@ -57,13 +54,13 @@ export default class UserService {
         throw new HttpException(error);
       }
   
-      let user = new User();
-  
-      user.openid = openid;
-      user.role = role;
-      user.nick_name = nick_name;
-  
       try {
+        const user = userRepo.create({
+          openid,
+          role,
+          nick_name
+        })
+
         let result = await userRepo.save(user);
         return {
           code: 200,
@@ -91,7 +88,7 @@ export default class UserService {
      * 
      */
   static async getUserInfo(context?: Context) {
-    const userRepo = getManager().getRepository(User);
+    const userRepo = this.getRepository<User>(User);
 
     const { openid } = context.request.body;
 
@@ -119,5 +116,51 @@ export default class UserService {
     }
   }
 
-   
+
+  /**
+     * @api {post} /user/collectionFormId 收集表单id, 用于模版推送
+     * @apiName collectionFormId
+     * @apiGroup User
+     *
+     * @apiParam {Number} openid  用户唯一openid.
+     * @apiParam {Number} form_id 表单id.
+     * @apiSuccess {String} code 200
+     * 
+   */
+  static async collectionFormId(context?: Context) {
+    const WxFormIdRepo = this.getRepository<WxFormId>(WxFormId);
+    
+    const { openid, form_id } = context.request.body;
+
+    if (!openid || !form_id) {
+      const error = {
+        code: RequesetErrorCode.PARAMS_ERROR.code,
+        msg: RequesetErrorCode.PARAMS_ERROR.msg
+      };
+      throw new HttpException(error);
+    }
+
+    try {
+      const formInfo = WxFormIdRepo.create({
+        openid,
+        form_id,
+        expire: new Date().getTime() + (7 * 24 * 60 * 60 * 1000)
+      });
+  
+      const res = await WxFormIdRepo.save(formInfo);
+      
+      return {
+        code: 200,
+        data: res,
+        msg: null
+      }
+
+    }catch (e) {
+      const error = {
+        code: e.code,
+        msg: e.message
+      };
+      throw new HttpException(error);
+    }
+  }
 }

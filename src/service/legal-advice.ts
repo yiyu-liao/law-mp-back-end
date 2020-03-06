@@ -7,10 +7,11 @@ import HttpException from "@src/utils/http-exception";
 
 import LegalAdvice from "@src/entity/legal-advice";
 import AdviceReply from "@src/entity/advice-reply";
+import WxService from "./wx";
 
 export default class LegalAdviceService {
-  static getRepository(entity: any) {
-    return getManager().getRepository(entity);
+  static getRepository<T>(target: any): Repository<T> {
+    return getManager().getRepository(target);
   }
 
 
@@ -20,14 +21,14 @@ export default class LegalAdviceService {
      * @apiGroup Legal Advice
      *
      * @apiParam {Number} c_openid  发布者c_openid
-     * @apiParam {Number} topic  咨询主题。0 => 民事代理, 1 => 商事纠纷, 2 => 刑事辩护, 3 => 行政诉讼
+     * @apiParam {Number} topic  咨询主题。1 => 民事代理, 2 => 商事纠纷, 3 => 刑事辩护, 4 => 行政诉讼
      * @apiParam {content} content  咨询内容
 
      *
      * @apiSuccess {String} code 200
    */
   static async publishAdvice(context?: Context) {
-    const Repo = this.getRepository(LegalAdvice);
+    const Repo = this.getRepository<LegalAdvice>(LegalAdvice);
 
     const { c_openid, topic, content } = context.request.body;
     if (!c_openid || !topic || !content) {
@@ -38,12 +39,13 @@ export default class LegalAdviceService {
       throw new HttpException(error);
     }
 
-    let advice = new LegalAdvice();
-    advice.c_openid = c_openid;
-    advice.topic = topic;
-    advice.content = content;
-
     try {
+      const advice = Repo.create({
+        c_openid,
+        topic,
+        content
+      })
+
       const result = await Repo.save(advice);
       return {
         code: 200,
@@ -77,7 +79,7 @@ export default class LegalAdviceService {
      * @apiSuccess {String} code 200
    */
   static async replyAdvice(context?: Context) {
-    const ReplyRep = this.getRepository(AdviceReply);
+    const ReplyRepo = this.getRepository<AdviceReply>(AdviceReply);
 
     const {
       advice_id,
@@ -89,22 +91,24 @@ export default class LegalAdviceService {
       to_name
     } = context.request.body;
 
-    let reply = new AdviceReply();
-    let advice = new LegalAdvice();
-
-    advice.id = advice_id;
-
-    reply.pid = pid;
-    reply.content = content;
-    reply.from_openid = from_openid;
-    reply.from_name = from_name;
-    reply.to_openid = to_openid;
-    reply.to_name = to_name;
-
-    reply.advice = advice;
-
+    
     try {
-      const res = await ReplyRep.save(reply);
+      const advice = new LegalAdvice();
+      advice.id = advice_id;
+
+      const reply = ReplyRepo.create({
+        pid,
+        content,
+        from_openid,
+        from_name,
+        to_openid,
+        to_name,
+        advice
+      });
+
+      const res = await ReplyRepo.save(reply);
+
+      WxService.sendMessageToUser(to_openid, content);
 
       return {
         code: 200,
@@ -121,16 +125,16 @@ export default class LegalAdviceService {
   }
 
 
-   /**
-     * @api {post} /advice/detail 获取详情咨询详情
-     * @apiName getAdviceDetail
-     * @apiGroup Legal Advice
-     *
-    * @apiParam {Number} id  咨询id
+  /**
+    * @api {post} /advice/detail 获取详情咨询详情
+    * @apiName getAdviceDetail
+    * @apiGroup Legal Advice
+    *
+   * @apiParam {Number} id  咨询id
 
-     * @apiSuccess {String} code 200
-     * @apiSuccess {Array} data []
-   */
+    * @apiSuccess {String} code 200
+    * @apiSuccess {Array} data []
+  */
   static async getAdviceDetail(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -203,15 +207,15 @@ export default class LegalAdviceService {
     }
   }
 
-   /**
-     * @api {get} /advice/all 获取系统所有咨询列表
-     * @apiName getAllAdvices
-     * @apiGroup Legal Advice
-     *
-     *
-     * @apiSuccess {String} code 200
-     * @apiSuccess {Array} data []
-   */
+  /**
+    * @api {get} /advice/all 获取系统所有咨询列表
+    * @apiName getAllAdvices
+    * @apiGroup Legal Advice
+    *
+    *
+    * @apiSuccess {String} code 200
+    * @apiSuccess {Array} data []
+  */
   static async getAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -232,7 +236,7 @@ export default class LegalAdviceService {
     }
   }
 
-  static async deleteAdvice() {}
+  static async deleteAdvice() { }
 
-  static async updateAdice() {}
+  static async updateAdice() { }
 }

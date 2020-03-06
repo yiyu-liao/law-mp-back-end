@@ -3,12 +3,12 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import Bidders from './bidders';
 
 export enum ORDER_STATUS {
-    bidding = 0,
-    pending = 1,
-    processing = 2,
-    complete = 3,
-    appeal = 4,
-    cancel = 5
+    bidding = 1,
+    pending = 2,
+    processing = 3,
+    complete = 4,
+    appeal = 5,
+    cancel = 6
 }
 
 @Entity()
@@ -19,7 +19,7 @@ export default class LegalOrder {
     @Column()
     c_openid: number;
 
-    @Column() // 订单类型，0 => 文书起草，1 => 案件委托， 2 => 法律顾问， 3 => 案件查询
+    @Column() // 订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
     order_type: number;
 
     @Column()

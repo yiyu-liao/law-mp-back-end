@@ -5,20 +5,24 @@ import OrderServer from '@src/controller/order'
 
 const user = [
   {
-    path: "/user/login",
+    path: "/user/authSession",
     method: "get",
-    action: UserController.login
+    action: UserController.authSession
   },
   {
     path: "/user/register",
     method: "post",
     action: UserController.register
   },
-  
   {
     path: "/user/detail",
     method: "post",
     action: UserController.getUserInfo
+  },
+  {
+    path: "/user/collectionFormId",
+    method: "post",
+    action: UserController.collectionFormId
   }
 ];
 

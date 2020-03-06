@@ -31,10 +31,10 @@ export default class User {
   nick_name: string;
 
   @Column()
-  role: number; // 0 => customer, 1 => lawyer
+  role: number; // 1 => customer, 2 => lawyer
 
   @Column({ default: null })
-  verify_status: number; // 0 => 未认证， 1 => 认证中， 2 => 已认证
+  verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
 
   @Column({ type: 'simple-json', default: null })
   extra_info: ILawyerVerifyInfo;
