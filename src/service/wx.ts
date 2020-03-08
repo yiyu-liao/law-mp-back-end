@@ -45,8 +45,8 @@ export default class WxService {
     }
 
     static async getAccessToken(): Promise<any> {
-        const url = `https://api.weixin.qq.com/cgi-bin/`;
-
+        const url = `https://api.weixin.qq.com/cgi-bin/token`;
+    
         return Axios.get(url, {
             params: {
                 grant_type: 'client_credential',
@@ -59,7 +59,7 @@ export default class WxService {
     static async sendMessageToUser(payload: IMessagePayload) {
         const { data } = await this.getAccessToken();
         const ACCESS_TOKEN = data.access_token;
-
+        
         const date = new Date();
         const time = `${date.getFullYear()}.${date.getMonth() + 1}.${date.getTime()}`
 
@@ -70,7 +70,7 @@ export default class WxService {
                 access_token: ACCESS_TOKEN,
                 touser: payload.touser,
                 template_id: Config.subscribe_temple_id,
-                page: payload.page,
+                // page: payload.page,
                 data: {
                     key1: {
                         value: payload.content
