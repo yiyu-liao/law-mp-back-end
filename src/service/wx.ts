@@ -18,6 +18,14 @@ interface IAuthSession {
     errmsg?: string;
 }
 
+interface IMessagePayload {
+    title?: string,
+    touser: string,
+    content: string,
+    page?: string,
+    replyer?: string
+}
+
 export default class WxService {
     static getRepository<T>(target: any): Repository<T> {
         return getManager().getRepository(target);
@@ -48,7 +56,7 @@ export default class WxService {
         });
     }
 
-    static async sendMessageToUser(openid: string | number, content: string, page: string = '') {
+    static async sendMessageToUser(payload: IMessagePayload) {
         const { data } = await this.getAccessToken();
         const ACCESS_TOKEN = data.access_token;
 
@@ -60,21 +68,21 @@ export default class WxService {
         return Axios.post(url, {
             data: {
                 access_token: ACCESS_TOKEN,
-                touser: openid,
+                touser: payload.touser,
                 template_id: Config.subscribe_temple_id,
-                page: '',
+                page: payload.page,
                 data: {
                     key1: {
-                        value: content
+                        value: payload.content
                     },
                     key2: {
                         value: time
                     },
                     key3: {
-                        value: 'test-replyer',
+                        value: payload.replyer,
                     },
                     key4: {
-                        value: 'test-title'
+                        value: payload.title
                     }
                 }
 

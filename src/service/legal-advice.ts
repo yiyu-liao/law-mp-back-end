@@ -108,7 +108,12 @@ export default class LegalAdviceService {
 
       const res = await ReplyRepo.save(reply);
 
-      // WxService.sendMessageToUser(to_openid, content);
+      WxService.sendMessageToUser({
+        touser: to_openid,
+        replyer: from_name,
+        content,
+        title: ''
+      });
 
       return {
         code: ResponseCode.SUCCESS.code,
@@ -116,8 +121,6 @@ export default class LegalAdviceService {
         msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
-      console.log(e);
-
       const error = {
         code: e.code,
         msg: e.message
