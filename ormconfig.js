@@ -9,5 +9,6 @@ module.exports = {
   database: "law_mp",
   synchronize: true,
   logging: false,
+  charset: "utf8mb4_unicode_ci",
   entities: [`${env == "dev" ? "src" : "dist"}/entity/*{.ts,.js}`]
 };
