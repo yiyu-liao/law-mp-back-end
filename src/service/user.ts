@@ -25,11 +25,12 @@ export default class UserService {
      * @apiSuccess {String} code 200
      */
     static async authSession(context?: Context) {
-      const { js_code } = context.request.body;
+      const { js_code } = context.request.query;
 
-      const res = await WxService.authCode2Session(js_code);      
-      
+      const res = await WxService.authCode2Session(js_code); 
+
       return res.data;
+
     }
 
 
