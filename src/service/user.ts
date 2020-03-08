@@ -7,6 +7,7 @@ import { RequesetErrorCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
 import WxService from './wx';
+import { relative } from "path";
 
 export default class UserService {
 
@@ -101,7 +102,7 @@ export default class UserService {
     }
 
     try {
-      const user = await userRepo.findOne({ where: { openid } });
+      const user = await userRepo.findOne({ where: { openid }, relations: ["extra_profile"] });
       return {
         code: 200,
         data: user,

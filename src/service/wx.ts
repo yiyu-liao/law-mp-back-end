@@ -1,5 +1,5 @@
 import Axios from 'axios';
-import * as Config from '../../config.json';
+import * as Config from '../../config.js';
 
 import { getManager, Repository, LessThan, Like, MoreThan } from "typeorm";
 import WxFormId from '@src/entity/wx-form-id';

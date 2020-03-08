@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"; 
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm"; 
+
+import Lawyer from './lawyer';
 
 export interface ILawyerVerifyInfo {
   real_name: string;
@@ -16,6 +18,8 @@ export interface ILawyerVerifyInfo {
   license_no: string;
 }
 
+
+
 @Entity()
 export default class User {
   @PrimaryGeneratedColumn()
@@ -24,18 +28,22 @@ export default class User {
   @Column()
   openid: string;
 
-  @Column()
+  @Column({ default: null })
   avatar: string;
 
-  @Column()
+  @Column({ default: null })
   nick_name: string;
+
+  @Column({ default: null })
+  real_name: string;
 
   @Column()
   role: number; // 1 => customer, 2 => lawyer
 
-  @Column({ default: null })
+  @Column({ default: 1 })
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
 
-  @Column({ type: 'simple-json', default: null })
-  extra_info: ILawyerVerifyInfo;
+  @OneToOne(type => Lawyer)
+  @JoinColumn()
+  extra_profile: Lawyer;
 }
