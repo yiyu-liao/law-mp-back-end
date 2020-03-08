@@ -3,19 +3,19 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "ty
 import Lawyer from './lawyer';
 
 export interface ILawyerVerifyInfo {
-  real_name: string;
+  real_name?: string;
 
-  office: string;
+  offic?: string;
 
-  location: string;
+  location?: string;
 
-  experience_year: number;
+  experience_year?: number;
 
-  id_photo: string;
+  id_photo?: string;
 
-  license_photo: string;
+  license_photo?: string;
 
-  license_no: string;
+  license_no?: string;
 }
 
 
@@ -44,6 +44,6 @@ export default class User {
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
 
   @OneToOne(type => Lawyer)
-  @JoinColumn()
+  @JoinColumn( { name: 'extra_profile_id' })
   extra_profile: Lawyer;
 }

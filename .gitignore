@@ -3,3 +3,4 @@ dist
 yarn.lock
 package.json.lock
 doc
+logs

@@ -1,19 +1,20 @@
 import { Context } from "koa";
 import { getManager, Repository } from "typeorm";
 import User from "@src/entity/user";
-import WxFormId from "@src/entity/wx-form-id";
+import Lawyer from '@src/entity/lawyer';
 
-import { RequesetErrorCode } from "@src/constant";
+import { ResponseCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
 import WxService from './wx';
-import { relative } from "path";
+
 
 export default class UserService {
 
     static getRepository<T>(target: any): Repository<T> {
       return getManager().getRepository(target);
     }
+
 
     /**
      * @api {post} /user/authSession 登录获取openid
@@ -30,6 +31,7 @@ export default class UserService {
       
       return res.data;
     }
+
 
     /**
      * @api {post} /user/register 注册新用户
@@ -49,8 +51,8 @@ export default class UserService {
   
       if (!openid || !role || !nick_name) {
         const error = {
-          code: RequesetErrorCode.PARAMS_ERROR.code,
-          msg: RequesetErrorCode.PARAMS_ERROR.msg
+          code: ResponseCode.ERROR_PARAMS.code,
+          msg: ResponseCode.ERROR_PARAMS.msg
         };
         throw new HttpException(error);
       }
@@ -64,9 +66,9 @@ export default class UserService {
 
         let result = await userRepo.save(user);
         return {
-          code: 200,
+          code: ResponseCode.SUCCESS.code,
           data: result,
-          msg: null
+          msg: ResponseCode.SUCCESS.msg
         };
       } catch (e) {
         const error = {
@@ -78,7 +80,53 @@ export default class UserService {
     }
 
 
+
     /**
+     * @api {post} /user/applyVerify 获取用户信息
+     * @apiName LawyerapplyVerify
+     * @apiGroup User
+     *
+     * @apiParam {Number} openid  用户唯一openid.
+     *
+     * @apiSuccess {String} code 200
+     * 
+    */
+    static async updateLawyerVerifyInfo(context?: Context) {
+
+      const userRepo = this.getRepository<User>(User);
+
+      const params = context.request.body;
+      let userId = params.id;
+      delete params.id
+    
+      try {
+        let lawyer = new Lawyer();
+        lawyer = {
+          ...params
+        };
+
+        let user = userRepo.create({
+          id: userId,
+          extra_profile: lawyer
+        });
+        let result = userRepo.update(userId, user);
+        return {
+          code: ResponseCode.SUCCESS.code,
+          data: result,
+          msg: ResponseCode.SUCCESS.msg
+        }
+      }catch (e) {
+        const error = {
+          code: e.code,
+          msg: e.message
+        };
+        throw new HttpException(error);
+      }
+
+    }
+
+
+  /**
      * @api {post} /user/detail 获取用户信息
      * @apiName detail
      * @apiGroup User
@@ -87,7 +135,7 @@ export default class UserService {
      *
      * @apiSuccess {String} code 200
      * 
-     */
+  */
   static async getUserInfo(context?: Context) {
     const userRepo = this.getRepository<User>(User);
 
@@ -95,8 +143,8 @@ export default class UserService {
 
     if (!openid) {
       const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
+        code: ResponseCode.ERROR_PARAMS.code,
+        msg: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -104,59 +152,11 @@ export default class UserService {
     try {
       const user = await userRepo.findOne({ where: { openid }, relations: ["extra_profile"] });
       return {
-        code: 200,
+        code: ResponseCode.SUCCESS.code,
         data: user,
-        msg: null
+        msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
-  }
-
-
-  /**
-     * @api {post} /user/collectionFormId 收集表单id, 用于模版推送
-     * @apiName collectionFormId
-     * @apiGroup User
-     *
-     * @apiParam {Number} openid  用户唯一openid.
-     * @apiParam {Number} form_id 表单id.
-     * @apiSuccess {String} code 200
-     * 
-   */
-  static async collectionFormId(context?: Context) {
-    const WxFormIdRepo = this.getRepository<WxFormId>(WxFormId);
-    
-    const { openid, form_id } = context.request.body;
-
-    if (!openid || !form_id) {
-      const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
-      };
-      throw new HttpException(error);
-    }
-
-    try {
-      const formInfo = WxFormIdRepo.create({
-        openid,
-        form_id,
-        expire: new Date().getTime() + (7 * 24 * 60 * 60 * 1000)
-      });
-  
-      const res = await WxFormIdRepo.save(formInfo);
-      
-      return {
-        code: 200,
-        data: res,
-        msg: null
-      }
-
-    }catch (e) {
       const error = {
         code: e.code,
         msg: e.message

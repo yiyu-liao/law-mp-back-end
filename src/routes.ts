@@ -18,11 +18,6 @@ const user = [
     path: "/user/detail",
     method: "post",
     action: UserController.getUserInfo
-  },
-  {
-    path: "/user/collectionFormId",
-    method: "post",
-    action: UserController.collectionFormId
   }
 ];
 

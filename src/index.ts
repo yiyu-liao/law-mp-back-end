@@ -15,7 +15,7 @@ createConnection()
     const router = new Router({
       prefix: "/api"
     });
-    const port = process.env.PORT || 3000;
+    const port = process.env.PORT || 9527;
     const env = process.env.NODE_ENV || 'dev' // Current mode
 
     // error log

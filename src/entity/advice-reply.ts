@@ -33,7 +33,7 @@ export default class AdviceReply {
   @Column()
   to_name: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   create_time: string;
 
   @ManyToOne(

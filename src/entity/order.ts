@@ -17,7 +17,7 @@ export default class LegalOrder {
     id: number;
 
     @Column()
-    c_openid: number;
+    c_openid: string;
 
     @Column() // 订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
     order_type: number;
@@ -36,7 +36,7 @@ export default class LegalOrder {
     extra_info: any;
 
     @Column({ default: null })
-    winner_openid: number;
+    winner_openid: string;
 
     @Column({ default: ORDER_STATUS.bidding })
     status: number;

@@ -4,6 +4,7 @@ import {
   Column,
   JoinColumn,
   OneToOne,
+  CreateDateColumn,
   OneToMany
 } from "typeorm";
 import AdviceReply from "./advice-reply";
@@ -15,19 +16,33 @@ enum TopicEnum {
   administrative_proceedings // 行政诉讼
 }
 
+export enum ADVICE_STATUS {
+  answering = 1,
+  over = 2
+}
+
 @Entity()
 export default class LegalAdvice {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  c_openid: number;
+  c_openid: string;
+
+  // @Column({ type: 'simple-array' })
+  // l_openids: string[] | number[];
 
   @Column()
   topic: number;
 
   @Column()
   content: string;
+
+  @Column({ default: ADVICE_STATUS.answering })
+  status: number;
+
+  @CreateDateColumn({ type: 'timestamp' } )
+  create_time: string;
 
   @OneToMany(
     type => AdviceReply,

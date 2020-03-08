@@ -2,7 +2,7 @@ import { Context } from "koa";
 
 import { getManager, Repository } from "typeorm";
 
-import { RequesetErrorCode } from "@src/constant";
+import { ResponseCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
 import LegalAdvice from "@src/entity/legal-advice";
@@ -16,7 +16,7 @@ export default class LegalAdviceService {
 
 
   /**
-     * @api {post} /advice/publish 客户发布咨询
+     * @api {post} /advice/publish 发布咨询
      * @apiName publishAdvice
      * @apiGroup Legal Advice
      *
@@ -33,8 +33,8 @@ export default class LegalAdviceService {
     const { c_openid, topic, content } = context.request.body;
     if (!c_openid || !topic || !content) {
       const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
+        code: ResponseCode.ERROR_PARAMS.code,
+        msg: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -48,9 +48,9 @@ export default class LegalAdviceService {
 
       const result = await Repo.save(advice);
       return {
-        code: 200,
+        code: ResponseCode.SUCCESS.code,
         data: result,
-        msg: null
+        msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
@@ -63,12 +63,12 @@ export default class LegalAdviceService {
 
 
   /**
-     * @api {post} /advice/reply 回复咨询
+     * @api {post} /advice/reply 回复咨询或律师评论
      * @apiName replyAdvice
      * @apiGroup Legal Advice
      *
      * @apiParam {Number} advice_id  咨询id
-     * @apiParam {Number} pid  回复目标评论的id, 若是目标是咨询内容，pid为0
+     * @apiParam {Number} pid 回复目标评论的id, 若是目标是咨询内容，pid为0
      * @apiParam {content} content  回复内容
      * @apiParam {content} from_openid  回复者openid
      * @apiParam {content} from_name  回复者名字
@@ -108,14 +108,16 @@ export default class LegalAdviceService {
 
       const res = await ReplyRepo.save(reply);
 
-      WxService.sendMessageToUser(to_openid, content);
+      // WxService.sendMessageToUser(to_openid, content);
 
       return {
-        code: 200,
+        code: ResponseCode.SUCCESS.code,
         data: res,
-        msg: null
+        msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
+      console.log(e);
+
       const error = {
         code: e.code,
         msg: e.message
@@ -126,7 +128,7 @@ export default class LegalAdviceService {
 
 
   /**
-    * @api {post} /advice/detail 获取详情咨询详情
+    * @api {post} /advice/detail 获取咨询详情
     * @apiName getAdviceDetail
     * @apiGroup Legal Advice
     *
@@ -142,8 +144,8 @@ export default class LegalAdviceService {
 
     if (!id) {
       const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
+        code: ResponseCode.ERROR_PARAMS.code,
+        msg: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -151,9 +153,9 @@ export default class LegalAdviceService {
     try {
       const advice = await Repo.findOne(id, { relations: ["replies"] });
       return {
-        code: 200,
+        code: ResponseCode.SUCCESS.code,
         data: advice,
-        msg: null
+        msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
@@ -180,8 +182,8 @@ export default class LegalAdviceService {
 
     if (!openid) {
       const error = {
-        code: RequesetErrorCode.PARAMS_ERROR.code,
-        msg: RequesetErrorCode.PARAMS_ERROR.msg
+        code: ResponseCode.ERROR_PARAMS.code,
+        msg: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -194,9 +196,9 @@ export default class LegalAdviceService {
       });
 
       return {
-        code: 200,
+        code: ResponseCode.SUCCESS.code,
         data: result,
-        msg: null
+        msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
@@ -208,7 +210,7 @@ export default class LegalAdviceService {
   }
 
   /**
-    * @api {get} /advice/all 获取系统所有咨询列表
+    * @api {get} /advice/all 获取所有用户咨询列表
     * @apiName getAllAdvices
     * @apiGroup Legal Advice
     *
@@ -220,12 +222,12 @@ export default class LegalAdviceService {
     const Repo = this.getRepository(LegalAdvice);
 
     try {
-      let result = await Repo.find();
+      let result = await Repo.find({ relations: ["replies"] });
 
       return {
-        code: 200,
+        code: ResponseCode.SUCCESS.code,
         data: result,
-        msg: null
+        msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {

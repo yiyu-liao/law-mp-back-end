@@ -2,8 +2,6 @@ import Axios from 'axios';
 import * as Config from '../../config.js';
 
 import { getManager, Repository, LessThan, Like, MoreThan } from "typeorm";
-import WxFormId from '@src/entity/wx-form-id';
-
 
 interface IAccessResponse  {
     access_token?: string;
@@ -38,7 +36,7 @@ export default class WxService {
         });
     }
 
-    static async getAccessToken() {
+    static async getAccessToken(): Promise<any> {
         const url = `https://api.weixin.qq.com/cgi-bin/`;
 
         return Axios.get(url, {
@@ -51,10 +49,6 @@ export default class WxService {
     }
 
     static async sendMessageToUser(openid: string | number, content: string, page: string = '') {
-        let form = await this.getUserFormInfo(openid)
-        if (!form) return;
-
-
         const { data } = await this.getAccessToken();
         const ACCESS_TOKEN = data.access_token;
 
@@ -62,50 +56,29 @@ export default class WxService {
         const time = `${date.getFullYear()}.${date.getMonth() + 1}.${date.getTime()}`
 
         if (!ACCESS_TOKEN) return;
-        const url = `https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=${ACCESS_TOKEN}`;
-        let { data: messageResponse } =  await Axios.post(url, {
+        const url = `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${ACCESS_TOKEN}`;
+        return Axios.post(url, {
             data: {
                 access_token: ACCESS_TOKEN,
                 touser: openid,
-                template_id: '',
+                template_id: Config.subscribe_temple_id,
                 page: '',
-                form_id: form.form_id,
                 data: {
-
+                    key1: {
+                        value: content
+                    },
+                    key2: {
+                        value: time
+                    },
+                    key3: {
+                        value: 'test-replyer',
+                    },
+                    key4: {
+                        value: 'test-title'
+                    }
                 }
 
             }
         });
-
-        if (messageResponse.errcode === 0) {
-            await this.deleteUsedFormId(form.id);
-        }
-        
-        return messageResponse;
-
     }
-
-    static async getUserFormInfo(openid) {
-        const WxFormIdRepo = this.getRepository<WxFormId>(WxFormId);
-    
-        let currentTime = new Date().getTime();
-    
-        const res = await WxFormIdRepo.find({
-          expire: MoreThan(currentTime),
-          openid
-        });
-    
-        return res[0]
-    }
-
-    static async deleteUsedFormId(id) {
-        const WxFormIdRepo = this.getRepository<WxFormId>(WxFormId);
-        const form = new WxFormId();
-        form.id = id;
-        return await WxFormIdRepo.remove(form);
-    }
-
-
-
-
 }

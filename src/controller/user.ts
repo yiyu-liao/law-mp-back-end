@@ -10,7 +10,4 @@ export default class UserController {
   static async getUserInfo(ctx) {
     ctx.body = await UserService.getUserInfo(ctx);
   }
-  static async collectionFormId(ctx) {
-    ctx.body = await UserService.collectionFormId(ctx);
-  }
 }

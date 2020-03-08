@@ -11,7 +11,7 @@ export default class Bidders {
 
     // To Review，是否考虑设计成联表查询，拿出userInfo
     @Column()
-    l_openid: number;
+    l_openid: string;
 
     @ManyToOne(
         type => Order,

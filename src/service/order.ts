@@ -5,7 +5,7 @@ import Order, { ORDER_STATUS } from '@src/entity/order';
 import Bidders from '@src/entity/bidders';
 import WxService from './wx';
 
-import { RequesetErrorCode } from "@src/constant";
+import { ResponseCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
 
 export default class OrderService {
@@ -35,8 +35,8 @@ export default class OrderService {
 
         if (!c_openid || !order_type || !description || !response_time || !limit_time) {
             const error = {
-                code: RequesetErrorCode.PARAMS_ERROR.code,
-                msg: RequesetErrorCode.PARAMS_ERROR.msg
+                code: ResponseCode.ERROR_PARAMS.code,
+                msg: ResponseCode.ERROR_PARAMS.msg
               };
               throw new HttpException(error);
         }
@@ -53,9 +53,9 @@ export default class OrderService {
 
             const result = await Repo.save(order);
             return {
-                code: 200,
+                code: ResponseCode.SUCCESS.code,
                 data: result,
-                msg: null
+                msg: ResponseCode.SUCCESS.msg
             }
 
         }catch (e) {
@@ -88,8 +88,8 @@ export default class OrderService {
 
         if (!order_id || !l_openid || !price) {
             const error = {
-                code: RequesetErrorCode.PARAMS_ERROR.code,
-                msg: RequesetErrorCode.PARAMS_ERROR.msg
+                code: ResponseCode.ERROR_PARAMS.code,
+                msg: ResponseCode.ERROR_PARAMS.msg
               };
               throw new HttpException(error);
         }
@@ -107,9 +107,9 @@ export default class OrderService {
 
             const res = await bidderRepo.save(bidder);
             return {
-                code: 200,
+                code: ResponseCode.SUCCESS.code,
                 data: res,
-                msg: ''
+                msg: ResponseCode.SUCCESS.msg
             }
 
         }catch (e) {
@@ -137,8 +137,8 @@ export default class OrderService {
 
         if (!id) {
             const error = {
-                code: RequesetErrorCode.PARAMS_ERROR.code,
-                msg: RequesetErrorCode.PARAMS_ERROR.msg
+                code: ResponseCode.ERROR_PARAMS.code,
+                msg: ResponseCode.ERROR_PARAMS.msg
               };
               throw new HttpException(error);
         }
@@ -146,9 +146,9 @@ export default class OrderService {
         try {
             const orders = await orderRepo.findOne(id, { relations: ["bidders"] });
             return {
-              code: 200,
+              code: ResponseCode.SUCCESS.code,
               data: orders,
-              msg: null
+              msg: ResponseCode.SUCCESS.msg
             };
 
         }catch (e) {
@@ -159,8 +159,6 @@ export default class OrderService {
             throw new HttpException(error);
         }
     }
-
-
 
     /**
      * @api {post} /order/selectBidder 客户选中律师
@@ -179,8 +177,8 @@ export default class OrderService {
 
         if (!order_id || !l_openid) {
             const error = {
-                code: RequesetErrorCode.PARAMS_ERROR.code,
-                msg: RequesetErrorCode.PARAMS_ERROR.msg
+                code: ResponseCode.ERROR_PARAMS.code,
+                msg: ResponseCode.ERROR_PARAMS.msg
               };
               throw new HttpException(error);
         }
@@ -192,9 +190,9 @@ export default class OrderService {
             });
             const res = await orderRepo.update(order_id, order);
             return {
-                code: 200,
+                code: ResponseCode.SUCCESS.code,
                 data: res,
-                msg: ''
+                msg: ResponseCode.SUCCESS.msg
             }
 
         }catch (e) {
@@ -205,6 +203,7 @@ export default class OrderService {
             throw new HttpException(error);
         }
     }
+
 
     /**
      * @api {post} /order/updateStatus 更新order状态
@@ -227,8 +226,8 @@ export default class OrderService {
 
         if (!status) {
             const error = {
-                code: RequesetErrorCode.PARAMS_ERROR.code,
-                msg: RequesetErrorCode.PARAMS_ERROR.msg
+                code: ResponseCode.ERROR_PARAMS.code,
+                msg: ResponseCode.ERROR_PARAMS.msg
               };
               throw new HttpException(error);
         }
@@ -238,9 +237,9 @@ export default class OrderService {
             order.status = status;
             const res = await orderRepo.update(order_id, order);
             return {
-                code: 200,
+                code: ResponseCode.SUCCESS.code,
                 data: res,
-                msg: ''
+                msg: ResponseCode.SUCCESS.msg
             }
 
         }catch (e) {
