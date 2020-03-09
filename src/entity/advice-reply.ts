@@ -18,19 +18,19 @@ export default class AdviceReply {
   // @Column()
   // legal_advice_id: number;
 
-  @Column()
+  @Column({ charset: 'utf8', type: 'varchar' })
   content: string;
 
   @Column()
   from_openid: string;
 
-  @Column()
+  @Column({ charset: 'utf8' })
   from_name: string;
 
   @Column()
   to_openid: string;
 
-  @Column()
+  @Column({ charset: 'utf8' })
   to_name: string;
 
   @CreateDateColumn({ type: 'timestamp' })

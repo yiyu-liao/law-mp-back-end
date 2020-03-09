@@ -1,17 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"; 
 
 @Entity()
-export default class Lawyear {
+export default class Lawyer {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column({ default: null })
     balance: number;
 
-    @Column({ default: null })
+    @Column({ charset: 'utf8', default: null })
     office: string;
   
-    @Column({ default: null })
+    @Column({ charset: 'utf8', default: null })
     location: string;
   
     @Column({ default: null })

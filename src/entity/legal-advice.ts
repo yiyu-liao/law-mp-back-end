@@ -35,7 +35,7 @@ export default class LegalAdvice {
   @Column()
   topic: number;
 
-  @Column()
+  @Column({ charset: 'utf8', type: 'varchar' })
   content: string;
 
   @Column({ default: ADVICE_STATUS.answering })

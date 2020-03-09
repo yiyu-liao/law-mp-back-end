@@ -2,24 +2,6 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "ty
 
 import Lawyer from './lawyer';
 
-export interface ILawyerVerifyInfo {
-  real_name?: string;
-
-  offic?: string;
-
-  location?: string;
-
-  experience_year?: number;
-
-  id_photo?: string;
-
-  license_photo?: string;
-
-  license_no?: string;
-}
-
-
-
 @Entity()
 export default class User {
   @PrimaryGeneratedColumn()

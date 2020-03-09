@@ -1,0 +1,1 @@
+[2020-03-08T21:41:26.536] [ERROR] globallog - {"url":"POST /api/advice/publish","error":{"code":"ER_TRUNCATED_WRONG_VALUE_FOR_FIELD","msg":"ER_TRUNCATED_WRONG_VALUE_FOR_FIELD: Incorrect string value: '\\xF0\\x9F\\x98\\xA9' for column 'content' at row 1"}}
