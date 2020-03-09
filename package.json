@@ -47,13 +47,6 @@
     }
   },
   "lint-staged": {
-    "*.js": [
-      "prettier --write",
-      "git add"
-    ],
-    "*.ts?(x)": [
-      "prettier --parser=typescript --write",
-      "git add"
-    ]
+    "*.{js,jsx,ts,tsx,md,html,css}": "prettier --write"
   }
 }

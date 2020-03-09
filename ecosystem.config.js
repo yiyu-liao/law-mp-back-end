@@ -1,23 +1,23 @@
-const { name } = require('./package.json');
-const path = require('path');
+const { name } = require("./package.json");
+const path = require("path");
 
 module.exports = {
   apps: [
     {
       name,
-      script: path.resolve(__dirname, './dist/index.js'),
-      args: 'one two',
-      instances: require('os').cpus().length,
+      script: path.resolve(__dirname, "./dist/src/index.js"),
+      args: "one two",
+      instances: require("os").cpus().length,
       autorestart: true,
       watch: true,
-      max_memory_restart: '1G',
+      max_memory_restart: "1G",
       env: {
-        NODE_ENV: 'development',
+        NODE_ENV: "development",
         PORT: 3000
       },
       env_production: {
-        NODE_ENV: 'production',
-        PORT: 8080
+        NODE_ENV: "production",
+        PORT: 9527
       }
     }
   ]
