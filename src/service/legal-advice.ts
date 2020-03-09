@@ -14,7 +14,6 @@ export default class LegalAdviceService {
     return getManager().getRepository(target);
   }
 
-
   /**
      * @api {post} /advice/publish 发布咨询
      * @apiName publishAdvice
@@ -25,7 +24,7 @@ export default class LegalAdviceService {
      * @apiParam {content} content  咨询内容
 
      *
-     * @apiSuccess {String} code 200
+     * @apiSuccess {String} code S_Ok
    */
   static async publishAdvice(context?: Context) {
     const Repo = this.getRepository<LegalAdvice>(LegalAdvice);
@@ -44,7 +43,7 @@ export default class LegalAdviceService {
         c_openid,
         topic,
         content
-      })
+      });
 
       const result = await Repo.save(advice);
       return {
@@ -61,22 +60,21 @@ export default class LegalAdviceService {
     }
   }
 
-
   /**
-     * @api {post} /advice/reply 回复咨询或律师评论
+     * @api {post} /advice/reply 回复咨询
      * @apiName replyAdvice
      * @apiGroup Legal Advice
      *
      * @apiParam {Number} advice_id  咨询id
      * @apiParam {Number} pid 回复目标评论的id, 若是目标是咨询内容，pid为0
-     * @apiParam {content} content  回复内容
-     * @apiParam {content} from_openid  回复者openid
-     * @apiParam {content} from_name  回复者名字
-     * @apiParam {content} to_openid  被回复者openid
-     * @apiParam {content} to_name  被回复者名字
+     * @apiParam {String} content  回复内容
+     * @apiParam {String} from_openid  回复者openid
+     * @apiParam {String} from_name  回复者名字
+     * @apiParam {String} to_openid  被回复者openid
+     * @apiParam {String} to_name  被回复者名字
 
      *
-     * @apiSuccess {String} code 200
+     * @apiSuccess {String} code S_Ok
    */
   static async replyAdvice(context?: Context) {
     const ReplyRepo = this.getRepository<AdviceReply>(AdviceReply);
@@ -91,7 +89,6 @@ export default class LegalAdviceService {
       to_name
     } = context.request.body;
 
-    
     try {
       const advice = new LegalAdvice();
       advice.id = advice_id;
@@ -112,7 +109,7 @@ export default class LegalAdviceService {
         touser: to_openid,
         replyer: from_name,
         content,
-        title: ''
+        title: ""
       });
 
       return {
@@ -129,16 +126,14 @@ export default class LegalAdviceService {
     }
   }
 
-
   /**
     * @api {post} /advice/detail 获取咨询详情
     * @apiName getAdviceDetail
     * @apiGroup Legal Advice
     *
-   * @apiParam {Number} id  咨询id
+    * @apiParam {Number} id  咨询id
 
-    * @apiSuccess {String} code 200
-    * @apiSuccess {Array} data []
+    * @apiSuccess {String} code 
   */
   static async getAdviceDetail(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
@@ -170,13 +165,13 @@ export default class LegalAdviceService {
   }
 
   /**
-     * @api {post} /advice/customer 获取客户咨询列表
-     * @apiName getCustomerAllAdvices
-     * @apiGroup Legal Advice
-     *
-     * @apiParam {Number} openid  客户唯一openid.
-     *
-     * @apiSuccess {String} code 200
+   * @api {post} /advice/customer 获取特定客户咨询列表
+   * @apiName getCustomerAllAdvices
+   * @apiGroup Legal Advice
+   *
+   * @apiParam {Number} openid  客户唯一openid.
+   *
+   * @apiSuccess {String} code S_Ok
    */
   static async getCustomerAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
@@ -213,14 +208,14 @@ export default class LegalAdviceService {
   }
 
   /**
-    * @api {get} /advice/all 获取所有用户咨询列表
-    * @apiName getAllAdvices
-    * @apiGroup Legal Advice
-    *
-    *
-    * @apiSuccess {String} code 200
-    * @apiSuccess {Array} data []
-  */
+   * @api {get} /advice/all 获取所有客户咨询列表
+   * @apiName getAllAdvices
+   * @apiGroup Legal Advice
+   *
+   *
+   * @apiSuccess {String} code S_Ok
+   * @apiSuccess {Array} data []
+   */
   static async getAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
@@ -241,7 +236,7 @@ export default class LegalAdviceService {
     }
   }
 
-  static async deleteAdvice() { }
+  static async deleteAdvice() {}
 
-  static async updateAdice() { }
+  static async updateAdice() {}
 }
