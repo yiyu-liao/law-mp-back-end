@@ -1,6 +1,6 @@
 import { Context } from "koa";
 
-import { getManager, Repository } from "typeorm";
+import { getManager, Repository, getRepository } from "typeorm";
 
 import { ResponseCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
@@ -152,7 +152,7 @@ export default class LegalAdviceService {
       const advice = await Repo.findOne(id, { relations: ["replies"] });
       return {
         code: ResponseCode.SUCCESS.code,
-        data: advice,
+        data: advice ? advice : [],
         msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
@@ -165,7 +165,36 @@ export default class LegalAdviceService {
   }
 
   /**
-   * @api {post} /advice/customer 获取特定客户咨询列表
+   * @api {get} /advice/all 获取所有客户咨询列表
+   * @apiName getAllAdvices
+   * @apiGroup Legal Advice
+   *
+   *
+   * @apiSuccess {String} code S_Ok
+   * @apiSuccess {Array} data []
+   */
+  static async getAllAdvices(context?: Context) {
+    const Repo = this.getRepository(LegalAdvice);
+
+    try {
+      let result = await Repo.find({ relations: ["replies"] });
+
+      return {
+        code: ResponseCode.SUCCESS.code,
+        data: result,
+        msg: ResponseCode.SUCCESS.msg
+      };
+    } catch (e) {
+      const error = {
+        code: e.code,
+        msg: e.message
+      };
+      throw new HttpException(error);
+    }
+  }
+
+  /**
+   * @api {post} /advice/customer 获取客户咨询列表
    * @apiName getCustomerAllAdvices
    * @apiGroup Legal Advice
    *
@@ -208,19 +237,31 @@ export default class LegalAdviceService {
   }
 
   /**
-   * @api {get} /advice/all 获取所有客户咨询列表
-   * @apiName getAllAdvices
+   * @api {post} /advice/lawyer 获取律师回复的咨询列表
+   * @apiName getLawyerReplyAdvice
    * @apiGroup Legal Advice
    *
+   * @apiParam {Number} openid  律师唯一openid.
    *
    * @apiSuccess {String} code S_Ok
-   * @apiSuccess {Array} data []
    */
-  static async getAllAdvices(context?: Context) {
-    const Repo = this.getRepository(LegalAdvice);
+  static async getLawyerReplyAdvice(context?: Context) {
+    const { openid } = context.request.body;
+
+    if (!openid) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        msg: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
 
     try {
-      let result = await Repo.find({ relations: ["replies"] });
+      let result = await getRepository(LegalAdvice)
+        .createQueryBuilder("advice")
+        .leftJoinAndSelect("advice.replies", "reply")
+        .andWhere("reply.from_openid = :openid", { openid })
+        .getMany();
 
       return {
         code: ResponseCode.SUCCESS.code,

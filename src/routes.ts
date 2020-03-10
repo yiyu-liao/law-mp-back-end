@@ -1,7 +1,6 @@
 import UserController from "@src/controller/user";
 import LegalAdviceController from "@src/controller/legal-advice";
-import OrderServer from '@src/controller/order'
-
+import OrderServer from "@src/controller/order";
 
 const user = [
   {
@@ -20,7 +19,6 @@ const user = [
     action: UserController.getUserInfo
   }
 ];
-
 
 const legalAdvice = [
   {
@@ -42,6 +40,11 @@ const legalAdvice = [
     path: "/advice/customer",
     method: "post",
     action: LegalAdviceController.getCustomerAllAdvices
+  },
+  {
+    path: "/advice/lawyer",
+    method: "post",
+    action: LegalAdviceController.getLawyerReplyAdvice
   },
   {
     path: "/advice/all",
@@ -71,8 +74,6 @@ const order = [
     method: "post",
     action: OrderServer.selectBidder
   }
-]
-
-
+];
 
 export default [...user, ...legalAdvice, ...order];

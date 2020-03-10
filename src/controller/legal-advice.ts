@@ -4,6 +4,9 @@ export default class UserController {
   static async getCustomerAllAdvices(ctx) {
     ctx.body = await LegalAdviceService.getCustomerAllAdvices(ctx);
   }
+  static async getLawyerReplyAdvice(ctx) {
+    ctx.body = await LegalAdviceService.getLawyerReplyAdvice(ctx);
+  }
 
   static async publishAdvice(ctx) {
     ctx.body = await LegalAdviceService.publishAdvice(ctx);
