@@ -30,8 +30,8 @@ export default class LegalAdviceService {
   static async publishAdvice(context?: Context) {
     const Repo = this.getRepository<LegalAdvice>(LegalAdvice);
 
-    const { advicer_openid, topic, content } = context.request.body;
-    if (!advicer_openid || !topic || !content) {
+    const { advicer_openid, topic, content, title } = context.request.body;
+    if (!advicer_openid || !topic || !content || !title) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -46,6 +46,7 @@ export default class LegalAdviceService {
 
       const advice = Repo.create({
         topic,
+        title,
         content,
         advicer: user
       });

@@ -29,6 +29,9 @@ export default class LegalAdvice {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ charset: "utf8", type: "varchar" })
+  title: string;
+
   @Column()
   topic: number;
 
