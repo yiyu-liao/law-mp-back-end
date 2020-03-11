@@ -16,36 +16,85 @@ export default class UserService {
   /**
    * @api {post} /user/authSession 登录获取openid
    * @apiName authSession
+   * @apiDescription 返回用户信息
    * @apiGroup User
    *
    * @apiParam {Number} js_code, 登录时获取的 code
-   * @apiSuccess {String} code 200
+   * @apiParam {Object} user_info, 用户信息
+   * @apiSuccess {String} code S_Ok
    */
   static async authSession(context?: Context) {
-    const { js_code } = context.request.query;
+    const {
+      js_code,
+      user_info: { nickName, avatarUrl }
+    } = context.request.body;
 
-    const res = await WxService.authCode2Session(js_code);
+    const {
+      data: { openid, errcode, errmsg }
+    } = await WxService.authCode2Session(js_code);
 
-    return res.data;
+    if (!errcode) {
+      const userRepo = this.getRepository<User>(User);
+      try {
+        const user = await userRepo.findOne({
+          where: { openid },
+          relations: ["extra_profile"]
+        });
+        if (!user) {
+          let newUser = await userRepo.save(
+            userRepo.create({
+              openid,
+              nick_name: nickName,
+              avatar_url: avatarUrl,
+              role: 0
+            })
+          );
+          return {
+            code: ResponseCode.SUCCESS.code,
+            data: newUser ? newUser : null,
+            msg: ResponseCode.SUCCESS.msg
+          };
+        } else {
+          return {
+            code: ResponseCode.SUCCESS.code,
+            data: user ? user : null,
+            msg: ResponseCode.SUCCESS.msg
+          };
+        }
+      } catch (e) {
+        const error = {
+          code: e.code,
+          msg: e.message
+        };
+        throw new HttpException(error);
+      }
+    } else {
+      return {
+        code: errcode,
+        msg: errmsg
+      };
+    }
   }
 
   /**
-   * @api {post} /user/register 注册新用户
+   * @api {post} /user/update 更新用户信息
    * @apiName register
    * @apiGroup User
    *
-   * @apiParam {Number} openid  用户唯一openid.
-   * @apiParam {Number} role  用户角色，0为普通客户，1为律师
-   * @apiParam {String} nick_name  用户名称
-   *
-   * @apiSuccess {String} code 200
+   * @apiParam {Number} user_id  用户id, 非openid.
+   * @apiParam {Number} avatar_url 用户头像url
+   * @apiParam {Number} nick_name  用户昵称
+   * @apiParam {Number} real_name  用户真实姓名
+   * @apiParam {Number} role  用户角色  0 => null role, 1 => customer, 2 => lawyer
+   * @apiParam {Number} verify_status  用户状态 1 => 未认证， 2 => 认证中， 3 => 已认证
+   * @apiSuccess {String} code S_Ok
    */
-  static async register(context?: Context) {
+  static async updateUser(context?: Context) {
     const userRepo = this.getRepository<User>(User);
 
-    const { openid, role, nick_name } = context.request.body;
+    const { user_id } = context.request.body;
 
-    if (!openid || !role || !nick_name) {
+    if (!user_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -55,12 +104,10 @@ export default class UserService {
 
     try {
       const user = userRepo.create({
-        openid,
-        role,
-        nick_name
+        ...(context.request.body as User)
       });
 
-      let result = await userRepo.save(user);
+      let result = await userRepo.update(user_id, user);
       return {
         code: ResponseCode.SUCCESS.code,
         data: result,
@@ -80,13 +127,13 @@ export default class UserService {
    * @apiName LawyerapplyVerify
    * @apiGroup User
    *
-   * @apiParam {Number} id  用户id, 非openid
+   * @apiParam {Number} user_id  用户id, 非openid
    * @apiParam {Number} office  所在律所
    * @apiParam {Number} location  所在地区
    * @apiParam {Number} experience_year  经验年限
-   * @apiParam {Number} id_photo  正冠照片
-   * @apiParam {Number} license_photo  律师执业证照片
-   * @apiParam {Number} license_no  律师执业编号
+   * @apiParam {String} id_photo  正冠照片
+   * @apiParam {String} license_photo  律师执业证照片
+   * @apiParam {String} license_no  律师执业编号
    *
    *
    * @apiSuccess {String} code S_Ok
@@ -96,8 +143,8 @@ export default class UserService {
     const userRepo = this.getRepository<User>(User);
 
     const params = context.request.body;
-    let userId = params.id;
-    delete params.id;
+    let userId = params.user_id;
+    delete params.user_id;
 
     try {
       let lawyer = new Lawyer();
@@ -154,7 +201,7 @@ export default class UserService {
       });
       return {
         code: ResponseCode.SUCCESS.code,
-        data: user,
+        data: user ? user : null,
         msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {

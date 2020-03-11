@@ -18,7 +18,7 @@ export default class OrderService {
    * @apiName publish
    * @apiGroup Order
    *
-   * @apiParam {Number} c_openid  客户唯一openid.
+   * @apiParam {Number} customer_openid  客户唯一openid.
    * @apiParam {Number} order_type  订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
    * @apiParam {Object} extra_info 自定义的表单提交数据 { description?: string, response_time?: number, limit_time?: number; ... }
    *
@@ -27,9 +27,9 @@ export default class OrderService {
   static async publishOrder(context?: Context) {
     const Repo = this.getRepository<Order>(Order);
 
-    const { c_openid, order_type, extra_info } = context.request.body;
+    const { customer_openid, order_type, extra_info } = context.request.body;
 
-    if (!c_openid || !order_type) {
+    if (!customer_openid || !order_type) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -39,7 +39,7 @@ export default class OrderService {
 
     try {
       const order = Repo.create({
-        c_openid,
+        customer_openid,
         order_type,
         extra_info
       });
@@ -65,7 +65,7 @@ export default class OrderService {
    * @apiGroup Order
    *
    * @apiParam {Number} order_id  订单id.
-   * @apiParam {Number} l_openid  律师唯一openid.
+   * @apiParam {Number} lawyer_openid  律师唯一openid.
    * @apiParam {Number} price 报价
    *
    * @apiSuccess {String} code S_Ok
@@ -73,9 +73,9 @@ export default class OrderService {
   static async bidOrder(context?: Context) {
     const bidderRepo = this.getRepository<Bidders>(Bidders);
 
-    const { order_id, l_openid, price } = context.request.body;
+    const { order_id, lawyer_openid, price } = context.request.body;
 
-    if (!order_id || !l_openid || !price) {
+    if (!order_id || !lawyer_openid || !price) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -88,7 +88,7 @@ export default class OrderService {
       order.id = order_id;
 
       let bidder = bidderRepo.create({
-        l_openid,
+        lawyer_openid,
         price,
         order
       });
@@ -113,15 +113,15 @@ export default class OrderService {
    * @apiName getOrderDetail
    * @apiGroup Order
    *
-   * @apiParam {Number} id  订单id.
+   * @apiParam {Number} order_id  订单id.
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getOrderDetail(context?: Context) {
     const orderRepo = this.getRepository<Order>(Order);
-    const { id } = context.request.body;
+    const { order_id } = context.request.body;
 
-    if (!id) {
+    if (!order_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -130,7 +130,9 @@ export default class OrderService {
     }
 
     try {
-      const orders = await orderRepo.findOne(id, { relations: ["bidders"] });
+      const orders = await orderRepo.findOne(order_id, {
+        relations: ["bidders"]
+      });
       return {
         code: ResponseCode.SUCCESS.code,
         data: orders,

@@ -8,6 +8,7 @@ import HttpException from "@src/utils/http-exception";
 import LegalAdvice from "@src/entity/legal-advice";
 import AdviceReply from "@src/entity/advice-reply";
 import WxService from "./wx";
+import User from "@src/entity/user";
 
 export default class LegalAdviceService {
   static getRepository<T>(target: any): Repository<T> {
@@ -19,7 +20,7 @@ export default class LegalAdviceService {
      * @apiName publishAdvice
      * @apiGroup Legal Advice
      *
-     * @apiParam {Number} c_openid  发布者c_openid
+     * @apiParam {Number} advicer_openid  发布者的openid
      * @apiParam {Number} topic  咨询主题。1 => 民事代理, 2 => 商事纠纷, 3 => 刑事辩护, 4 => 行政诉讼
      * @apiParam {content} content  咨询内容
 
@@ -29,8 +30,8 @@ export default class LegalAdviceService {
   static async publishAdvice(context?: Context) {
     const Repo = this.getRepository<LegalAdvice>(LegalAdvice);
 
-    const { c_openid, topic, content } = context.request.body;
-    if (!c_openid || !topic || !content) {
+    const { advicer_openid, topic, content } = context.request.body;
+    if (!advicer_openid || !topic || !content) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -39,10 +40,14 @@ export default class LegalAdviceService {
     }
 
     try {
+      const user = await this.getRepository<User>(User).findOne({
+        where: { openid: advicer_openid }
+      });
+
       const advice = Repo.create({
-        c_openid,
         topic,
-        content
+        content,
+        advicer: user
       });
 
       const result = await Repo.save(advice);
@@ -52,6 +57,8 @@ export default class LegalAdviceService {
         msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
+      // console.log('error', e)
+
       const error = {
         code: e.code,
         msg: e.message
@@ -105,7 +112,7 @@ export default class LegalAdviceService {
 
       const res = await ReplyRepo.save(reply);
 
-      WxService.sendMessageToUser({
+      const { data } = await WxService.sendMessageToUser({
         touser: to_openid,
         replyer: from_name,
         content,
@@ -115,7 +122,8 @@ export default class LegalAdviceService {
       return {
         code: ResponseCode.SUCCESS.code,
         data: res,
-        msg: ResponseCode.SUCCESS.msg
+        msg: ResponseCode.SUCCESS.msg,
+        subscribeRes: data
       };
     } catch (e) {
       const error = {
@@ -131,16 +139,16 @@ export default class LegalAdviceService {
     * @apiName getAdviceDetail
     * @apiGroup Legal Advice
     *
-    * @apiParam {Number} id  咨询id
+    * @apiParam {Number} advice_id  咨询id
 
     * @apiSuccess {String} code 
   */
   static async getAdviceDetail(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
-    const { id } = context.request.body;
+    const { advice_id } = context.request.body;
 
-    if (!id) {
+    if (!advice_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -149,10 +157,12 @@ export default class LegalAdviceService {
     }
 
     try {
-      const advice = await Repo.findOne(id, { relations: ["replies"] });
+      const advice = await Repo.findOne(advice_id, {
+        relations: ["advicer", "replies"]
+      });
       return {
         code: ResponseCode.SUCCESS.code,
-        data: advice ? advice : [],
+        data: advice ? advice : null,
         msg: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
@@ -177,7 +187,7 @@ export default class LegalAdviceService {
     const Repo = this.getRepository(LegalAdvice);
 
     try {
-      let result = await Repo.find({ relations: ["replies"] });
+      let result = await Repo.find({ relations: ["advicer", "replies"] });
 
       return {
         code: ResponseCode.SUCCESS.code,
@@ -198,16 +208,14 @@ export default class LegalAdviceService {
    * @apiName getCustomerAllAdvices
    * @apiGroup Legal Advice
    *
-   * @apiParam {Number} openid  客户唯一openid.
+   * @apiParam {Number} customer_openid  客户openid.
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getCustomerAllAdvices(context?: Context) {
-    const Repo = this.getRepository(LegalAdvice);
+    const { customer_openid } = context.request.body;
 
-    const { openid } = context.request.body;
-
-    if (!openid) {
+    if (!customer_openid) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -216,11 +224,16 @@ export default class LegalAdviceService {
     }
 
     try {
-      let result = await Repo.find({
-        where: {
-          c_openid: openid
-        }
-      });
+      let result = await getRepository(LegalAdvice)
+        .createQueryBuilder("Advice")
+        .innerJoinAndSelect(
+          "Advice.advicer",
+          "advicer",
+          "advicer.openid = :customer_openid",
+          { customer_openid }
+        )
+        .leftJoinAndSelect("Advice.replies", "replies")
+        .getMany();
 
       return {
         code: ResponseCode.SUCCESS.code,
@@ -241,14 +254,14 @@ export default class LegalAdviceService {
    * @apiName getLawyerReplyAdvice
    * @apiGroup Legal Advice
    *
-   * @apiParam {Number} openid  律师唯一openid.
+   * @apiParam {Number} lawyer_openid  律师openid.
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getLawyerReplyAdvice(context?: Context) {
-    const { openid } = context.request.body;
+    const { lawyer_openid } = context.request.body;
 
-    if (!openid) {
+    if (!lawyer_openid) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         msg: ResponseCode.ERROR_PARAMS.msg
@@ -259,8 +272,13 @@ export default class LegalAdviceService {
     try {
       let result = await getRepository(LegalAdvice)
         .createQueryBuilder("advice")
-        .leftJoinAndSelect("advice.replies", "reply")
-        .andWhere("reply.from_openid = :openid", { openid })
+        .innerJoinAndSelect(
+          "advice.replies",
+          "reply",
+          "reply.from_openid = :lawyer_openid",
+          { lawyer_openid }
+        )
+        .leftJoinAndSelect("advice.advicer", "advicer")
         .getMany();
 
       return {

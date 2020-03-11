@@ -5,9 +5,12 @@ import {
   JoinColumn,
   OneToOne,
   CreateDateColumn,
-  OneToMany
+  OneToMany,
+  ManyToOne
 } from "typeorm";
 import AdviceReply from "./advice-reply";
+import User from "./user";
+import { type } from "os";
 
 enum TopicEnum {
   civil_agency, // 民事代理
@@ -27,26 +30,27 @@ export default class LegalAdvice {
   id: number;
 
   @Column()
-  c_openid: string;
-
-  // @Column({ type: 'simple-array' })
-  // l_openids: string[] | number[];
-
-  @Column()
   topic: number;
 
-  @Column({ charset: 'utf8', type: 'varchar' })
+  @Column({ charset: "utf8", type: "varchar" })
   content: string;
 
   @Column({ default: ADVICE_STATUS.answering })
   status: number;
 
-  @CreateDateColumn({ type: 'timestamp' } )
-  create_time: string;
+  @ManyToOne(
+    type => User,
+    user => user.advices
+  )
+  advicer: User;
 
   @OneToMany(
     type => AdviceReply,
-    reply => reply.advice
+    reply => reply.advice,
+    { cascade: true }
   )
   replies: AdviceReply[];
+
+  @CreateDateColumn({ type: "timestamp" })
+  create_time: string;
 }

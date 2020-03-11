@@ -25,7 +25,7 @@ export default class LegalOrder {
   id: number;
 
   @Column()
-  c_openid: string;
+  customer_openid: string;
 
   @Column() // 订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
   order_type: number;

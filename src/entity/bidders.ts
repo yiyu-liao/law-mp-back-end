@@ -1,22 +1,21 @@
-import {  Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import Order from './order';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import Order from "./order";
 
 @Entity()
 export default class Bidders {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    price: number;
+  @Column()
+  price: number;
 
-    // To Review，是否考虑设计成联表查询，拿出userInfo
-    @Column()
-    l_openid: string;
+  // To Review，是否考虑设计成联表查询，拿出userInfo
+  @Column()
+  lawyer_openid: string;
 
-    @ManyToOne(
-        type => Order,
-        order => order.bidders
-    )
-    order: Order
-
+  @ManyToOne(
+    type => Order,
+    order => order.bidders
+  )
+  order: Order;
 }

@@ -1,6 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm"; 
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+  PrimaryColumn
+} from "typeorm";
 
-import Lawyer from './lawyer';
+import Lawyer from "./lawyer";
+import LegalAdvice from "./legal-advice";
+import { type } from "os";
 
 @Entity()
 export default class User {
@@ -11,7 +21,7 @@ export default class User {
   openid: string;
 
   @Column({ default: null })
-  avatar: string;
+  avatar_url: string;
 
   @Column({ default: null })
   nick_name: string;
@@ -19,13 +29,19 @@ export default class User {
   @Column({ default: null })
   real_name: string;
 
-  @Column()
-  role: number; // 1 => customer, 2 => lawyer
+  @Column({ default: 0 })
+  role: number; // 0 => null role, 1 => customer, 2 => lawyer
 
   @Column({ default: 1 })
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
 
   @OneToOne(type => Lawyer)
-  @JoinColumn( { name: 'extra_profile_id' })
+  @JoinColumn({ name: "extra_profile_id" })
   extra_profile: Lawyer;
+
+  @OneToMany(
+    type => LegalAdvice,
+    advice => advice.advicer
+  )
+  advices: LegalAdvice[];
 }
