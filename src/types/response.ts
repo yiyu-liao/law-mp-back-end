@@ -1,7 +1,7 @@
 export interface IResponse {
-    code: string,
-    data?: object,
-    msg: string
+  code: string;
+  data?: object;
+  message: string;
 }
 
 export default IResponse;

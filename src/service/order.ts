@@ -1,5 +1,5 @@
 import { Context } from "koa";
-import { getManager, Repository } from "typeorm";
+import { getManager, Repository, getRepository } from "typeorm";
 
 import Order, { ORDER_STATUS } from "@src/entity/order";
 import Bidders from "@src/entity/bidders";
@@ -7,6 +7,7 @@ import WxService from "./wx";
 
 import { ResponseCode } from "@src/constant";
 import HttpException from "@src/utils/http-exception";
+import User from "@src/entity/user";
 
 export default class OrderService {
   static getRepository<T>(target: any): Repository<T> {
@@ -26,34 +27,41 @@ export default class OrderService {
    */
   static async publishOrder(context?: Context) {
     const Repo = this.getRepository<Order>(Order);
+    const userRepo = this.getRepository<User>(User);
 
     const { customer_openid, order_type, extra_info } = context.request.body;
 
     if (!customer_openid || !order_type) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
+    // TO Review, 是否有必要查找数据库拿到所有信息
+    let demander = await userRepo.findOne({
+      where: { openid: customer_openid }
+    });
+
     try {
       const order = Repo.create({
-        customer_openid,
+        demander,
         order_type,
         extra_info
       });
 
       const result = await Repo.save(order);
+
       return {
         code: ResponseCode.SUCCESS.code,
         data: result,
-        msg: ResponseCode.SUCCESS.msg
+        message: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
         code: e.code,
-        msg: e.message
+        message: e.message
       };
       throw new HttpException(error);
     }
@@ -78,7 +86,7 @@ export default class OrderService {
     if (!order_id || !lawyer_openid || !price) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -97,12 +105,54 @@ export default class OrderService {
       return {
         code: ResponseCode.SUCCESS.code,
         data: res,
-        msg: ResponseCode.SUCCESS.msg
+        message: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
         code: e.code,
-        msg: e.message
+        message: e.message
+      };
+      throw new HttpException(error);
+    }
+  }
+
+  /**
+   * @api {post} /order/list 获取需求订单list
+   * @apiName getOrderList
+   * @apiGroup Order
+   *
+   * @apiParam {Number} type  1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getOrderList(context?: Context) {
+    const { type } = context.request.body;
+
+    if (!type) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    try {
+      let result = await getRepository(Order)
+        .createQueryBuilder("Order")
+        .where("Order.type = :type", { type })
+        .leftJoinAndSelect("Order.bidders", "bidders")
+        .leftJoinAndSelect("Order.demander", "demander")
+        .getMany();
+
+      return {
+        code: ResponseCode.SUCCESS.code,
+        data: result,
+        message: ResponseCode.SUCCESS.msg
+      };
+    } catch (e) {
+      const error = {
+        code: e.code,
+        message: e.message
       };
       throw new HttpException(error);
     }
@@ -124,24 +174,24 @@ export default class OrderService {
     if (!order_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
     try {
       const orders = await orderRepo.findOne(order_id, {
-        relations: ["bidders"]
+        relations: ["demander", "bidders"]
       });
       return {
         code: ResponseCode.SUCCESS.code,
         data: orders,
-        msg: ResponseCode.SUCCESS.msg
+        message: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
         code: e.code,
-        msg: e.message
+        message: e.message
       };
       throw new HttpException(error);
     }
@@ -165,7 +215,7 @@ export default class OrderService {
     if (!order_id || !server_openid) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -179,12 +229,12 @@ export default class OrderService {
       return {
         code: ResponseCode.SUCCESS.code,
         data: res,
-        msg: ResponseCode.SUCCESS.msg
+        message: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
         code: e.code,
-        msg: e.message
+        message: e.message
       };
       throw new HttpException(error);
     }
@@ -211,7 +261,7 @@ export default class OrderService {
     if (!status) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
@@ -223,12 +273,12 @@ export default class OrderService {
       return {
         code: ResponseCode.SUCCESS.code,
         data: res,
-        msg: ResponseCode.SUCCESS.msg
+        message: ResponseCode.SUCCESS.msg
       };
     } catch (e) {
       const error = {
         code: e.code,
-        msg: e.message
+        message: e.message
       };
       throw new HttpException(error);
     }

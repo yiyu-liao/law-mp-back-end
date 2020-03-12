@@ -1,12 +1,9 @@
-export interface IErrorResponse {
-  code: number | string;
-  msg: string;
-}
+import IResponse from "@src/types/response";
 
 export default class HttpException extends Error {
-  error: IErrorResponse;
+  error: IResponse;
 
-  constructor(error: IErrorResponse) {
+  constructor(error: IResponse) {
     super();
     this.error = error;
   }

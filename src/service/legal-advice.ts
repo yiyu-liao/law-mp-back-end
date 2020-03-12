@@ -22,6 +22,7 @@ export default class LegalAdviceService {
      *
      * @apiParam {Number} advicer_openid  发布者的openid
      * @apiParam {Number} topic  咨询主题。1 => 民事代理, 2 => 商事纠纷, 3 => 刑事辩护, 4 => 行政诉讼
+     * @apiParam {String} title  咨询标题
      * @apiParam {content} content  咨询内容
 
      *
@@ -34,38 +35,28 @@ export default class LegalAdviceService {
     if (!advicer_openid || !topic || !content || !title) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
-    try {
-      const user = await this.getRepository<User>(User).findOne({
-        where: { openid: advicer_openid }
-      });
+    const user = await this.getRepository<User>(User).findOne({
+      where: { openid: advicer_openid }
+    });
 
-      const advice = Repo.create({
-        topic,
-        title,
-        content,
-        advicer: user
-      });
+    const advice = Repo.create({
+      topic,
+      title,
+      content,
+      advicer: user
+    });
 
-      const result = await Repo.save(advice);
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      // console.log('error', e)
-
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    const result = await Repo.save(advice);
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -97,42 +88,34 @@ export default class LegalAdviceService {
       to_name
     } = context.request.body;
 
-    try {
-      const advice = new LegalAdvice();
-      advice.id = advice_id;
+    const advice = new LegalAdvice();
+    advice.id = advice_id;
 
-      const reply = ReplyRepo.create({
-        pid,
-        content,
-        from_openid,
-        from_name,
-        to_openid,
-        to_name,
-        advice
-      });
+    const reply = ReplyRepo.create({
+      pid,
+      content,
+      from_openid,
+      from_name,
+      to_openid,
+      to_name,
+      advice
+    });
 
-      const res = await ReplyRepo.save(reply);
+    const res = await ReplyRepo.save(reply);
 
-      const { data } = await WxService.sendMessageToUser({
-        touser: to_openid,
-        replyer: from_name,
-        content,
-        title: ""
-      });
+    const { data } = await WxService.sendMessageToUser({
+      touser: to_openid,
+      replyer: from_name,
+      content,
+      title: ""
+    });
 
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: res,
-        msg: ResponseCode.SUCCESS.msg,
-        subscribeRes: data
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: res,
+      message: ResponseCode.SUCCESS.msg,
+      subscribeRes: data
+    };
   }
 
   /**
@@ -152,27 +135,19 @@ export default class LegalAdviceService {
     if (!advice_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
-    try {
-      const advice = await Repo.findOne(advice_id, {
-        relations: ["advicer", "replies"]
-      });
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: advice ? advice : null,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    const advice = await Repo.findOne(advice_id, {
+      relations: ["advicer", "replies"]
+    });
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: advice ? advice : null,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -187,21 +162,13 @@ export default class LegalAdviceService {
   static async getAllAdvices(context?: Context) {
     const Repo = this.getRepository(LegalAdvice);
 
-    try {
-      let result = await Repo.find({ relations: ["advicer", "replies"] });
+    let result = await Repo.find({ relations: ["advicer", "replies"] });
 
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -219,35 +186,27 @@ export default class LegalAdviceService {
     if (!customer_openid) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
-    try {
-      let result = await getRepository(LegalAdvice)
-        .createQueryBuilder("Advice")
-        .innerJoinAndSelect(
-          "Advice.advicer",
-          "advicer",
-          "advicer.openid = :customer_openid",
-          { customer_openid }
-        )
-        .leftJoinAndSelect("Advice.replies", "replies")
-        .getMany();
+    let result = await getRepository(LegalAdvice)
+      .createQueryBuilder("Advice")
+      .innerJoinAndSelect(
+        "Advice.advicer",
+        "advicer",
+        "advicer.openid = :customer_openid",
+        { customer_openid }
+      )
+      .leftJoinAndSelect("Advice.replies", "replies")
+      .getMany();
 
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -265,35 +224,27 @@ export default class LegalAdviceService {
     if (!lawyer_openid) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
-    try {
-      let result = await getRepository(LegalAdvice)
-        .createQueryBuilder("advice")
-        .innerJoinAndSelect(
-          "advice.replies",
-          "reply",
-          "reply.from_openid = :lawyer_openid",
-          { lawyer_openid }
-        )
-        .leftJoinAndSelect("advice.advicer", "advicer")
-        .getMany();
+    let result = await getRepository(LegalAdvice)
+      .createQueryBuilder("advice")
+      .innerJoinAndSelect(
+        "advice.replies",
+        "reply",
+        "reply.from_openid = :lawyer_openid",
+        { lawyer_openid }
+      )
+      .leftJoinAndSelect("advice.advicer", "advicer")
+      .getMany();
 
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   static async deleteAdvice() {}

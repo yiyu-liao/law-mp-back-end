@@ -64,8 +64,6 @@ export default class WxService {
     const time = `${date.getFullYear()}.${date.getMonth() +
       1}.${date.getTime()}`;
 
-    console.log("payload.touser", payload.touser);
-
     if (!ACCESS_TOKEN) return;
     const url = `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${ACCESS_TOKEN}`;
     return Axios.post(url, {

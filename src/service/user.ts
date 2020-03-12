@@ -35,43 +35,35 @@ export default class UserService {
 
     if (!errcode) {
       const userRepo = this.getRepository<User>(User);
-      try {
-        const user = await userRepo.findOne({
-          where: { openid },
-          relations: ["extra_profile"]
-        });
-        if (!user) {
-          let newUser = await userRepo.save(
-            userRepo.create({
-              openid,
-              nick_name: nickName,
-              avatar_url: avatarUrl,
-              role: 0
-            })
-          );
-          return {
-            code: ResponseCode.SUCCESS.code,
-            data: newUser ? newUser : null,
-            msg: ResponseCode.SUCCESS.msg
-          };
-        } else {
-          return {
-            code: ResponseCode.SUCCESS.code,
-            data: user ? user : null,
-            msg: ResponseCode.SUCCESS.msg
-          };
-        }
-      } catch (e) {
-        const error = {
-          code: e.code,
-          msg: e.message
+      const user = await userRepo.findOne({
+        where: { openid },
+        relations: ["extra_profile"]
+      });
+      if (!user) {
+        let newUser = await userRepo.save(
+          userRepo.create({
+            openid,
+            nick_name: nickName,
+            avatar_url: avatarUrl,
+            role: 0
+          })
+        );
+        return {
+          code: ResponseCode.SUCCESS.code,
+          data: newUser ? newUser : null,
+          message: ResponseCode.SUCCESS.msg
         };
-        throw new HttpException(error);
+      } else {
+        return {
+          code: ResponseCode.SUCCESS.code,
+          data: user ? user : null,
+          message: ResponseCode.SUCCESS.msg
+        };
       }
     } else {
       return {
         code: errcode,
-        msg: errmsg
+        message: errmsg
       };
     }
   }
@@ -97,29 +89,21 @@ export default class UserService {
     if (!user_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
 
-    try {
-      const user = userRepo.create({
-        ...(context.request.body as User)
-      });
+    const user = userRepo.create({
+      ...(context.request.body as User)
+    });
 
-      let result = await userRepo.update(user_id, user);
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    let result = await userRepo.update(user_id, user);
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -146,29 +130,21 @@ export default class UserService {
     let userId = params.user_id;
     delete params.user_id;
 
-    try {
-      let lawyer = new Lawyer();
-      lawyer = {
-        ...params
-      };
+    let lawyer = new Lawyer();
+    lawyer = {
+      ...params
+    };
 
-      let user = userRepo.create({
-        id: userId,
-        extra_profile: lawyer
-      });
-      let result = userRepo.update(userId, user);
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    let user = userRepo.create({
+      id: userId,
+      extra_profile: lawyer
+    });
+    let result = userRepo.update(userId, user);
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -189,27 +165,18 @@ export default class UserService {
     if (!openid) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
-        msg: ResponseCode.ERROR_PARAMS.msg
+        message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
-
-    try {
-      const user = await userRepo.findOne({
-        where: { openid },
-        relations: ["extra_profile"]
-      });
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: user ? user : null,
-        msg: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        msg: e.message
-      };
-      throw new HttpException(error);
-    }
+    const user = await userRepo.findOne({
+      where: { openid },
+      relations: ["extra_profile"]
+    });
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: user ? user : null,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 }
