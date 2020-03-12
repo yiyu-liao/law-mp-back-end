@@ -60,52 +60,50 @@ export default class LegalAdviceService {
   }
 
   /**
-     * @api {post} /advice/reply 回复咨询
-     * @apiName replyAdvice
-     * @apiGroup Legal Advice
-     *
-     * @apiParam {Number} advice_id  咨询id
-     * @apiParam {Number} pid 回复目标评论的id, 若是目标是咨询内容，pid为0
-     * @apiParam {String} content  回复内容
-     * @apiParam {String} from_openid  回复者openid
-     * @apiParam {String} from_name  回复者名字
-     * @apiParam {String} to_openid  被回复者openid
-     * @apiParam {String} to_name  被回复者名字
-
-     *
-     * @apiSuccess {String} code S_Ok
+   * @api {post} /advice/reply 回复咨询
+   * @apiName replyAdvice
+   * @apiGroup Legal Advice
+   *
+   * @apiParam {Number} advice_id  咨询id
+   * @apiParam {Number} pid 回复目标评论的id, 若是目标是咨询内容，pid为0
+   * @apiParam {String} content  回复内容
+   * @apiParam {String} from_openid  回复者openid
+   * @apiParam {String} to_openid  被回复者openid
+   *
+   * @apiSuccess {String} code S_Ok
    */
   static async replyAdvice(context?: Context) {
     const ReplyRepo = this.getRepository<AdviceReply>(AdviceReply);
+    // const AdviceRepo = this.getRepository<LegalAdvice>(LegalAdvice);
+    const UserRepo = this.getRepository<User>(User);
 
     const {
       advice_id,
       pid,
       content,
-      from_openid,
-      from_name,
       to_openid,
-      to_name
+      from_openid
     } = context.request.body;
 
     const advice = new LegalAdvice();
     advice.id = advice_id;
 
+    let from = await UserRepo.findOne({ where: { openid: from_openid } });
+    let to = await UserRepo.findOne({ where: { openid: to_openid } });
+
     const reply = ReplyRepo.create({
       pid,
       content,
-      from_openid,
-      from_name,
-      to_openid,
-      to_name,
+      from,
+      to,
       advice
     });
 
-    const res = await ReplyRepo.save(reply);
+    let res = await ReplyRepo.save(reply);
 
     const { data } = await WxService.sendMessageToUser({
       touser: to_openid,
-      replyer: from_name,
+      replyer: from.real_name,
       content,
       title: ""
     });
@@ -140,9 +138,15 @@ export default class LegalAdviceService {
       throw new HttpException(error);
     }
 
-    const advice = await Repo.findOne(advice_id, {
-      relations: ["advicer", "replies"]
-    });
+    let advice = await getRepository(LegalAdvice)
+      .createQueryBuilder("Advice")
+      .where("Advice.id = :advice_id", { advice_id })
+      .innerJoinAndSelect("Advice.advicer", "advicer")
+      .leftJoinAndSelect("Advice.replies", "replies")
+      .leftJoinAndSelect("replies.from", "from")
+      .leftJoinAndSelect("replies.to", "to")
+      .getMany();
+
     return {
       code: ResponseCode.SUCCESS.code,
       data: advice ? advice : null,

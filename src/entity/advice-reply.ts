@@ -3,9 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  ManyToOne
+  ManyToOne,
+  OneToOne,
+  JoinColumn
 } from "typeorm";
 import LegalAdvice from "./legal-advice";
+import User from "./user";
 
 @Entity()
 export default class AdviceReply {
@@ -18,22 +21,18 @@ export default class AdviceReply {
   // @Column()
   // legal_advice_id: number;
 
-  @Column({ charset: 'utf8', type: 'varchar' })
+  @Column({ charset: "utf8", type: "varchar" })
   content: string;
 
-  @Column()
-  from_openid: string;
+  @OneToOne(type => User)
+  @JoinColumn({ name: "from_id" })
+  from: User;
 
-  @Column({ charset: 'utf8' })
-  from_name: string;
+  @OneToOne(type => User)
+  @JoinColumn({ name: "to_id" })
+  to: User;
 
-  @Column()
-  to_openid: string;
-
-  @Column({ charset: 'utf8' })
-  to_name: string;
-
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: "timestamp" })
   create_time: string;
 
   @ManyToOne(

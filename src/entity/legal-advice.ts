@@ -49,8 +49,7 @@ export default class LegalAdvice {
 
   @OneToMany(
     type => AdviceReply,
-    reply => reply.advice,
-    { cascade: true }
+    reply => reply.advice
   )
   replies: AdviceReply[];
 
