@@ -40,13 +40,13 @@ export default class OrderService {
     }
 
     // TO Review, 是否有必要查找数据库拿到所有信息
-    let demander = await userRepo.findOne({
+    let publisher = await userRepo.findOne({
       where: { openid: customer_openid }
     });
 
     try {
       const order = Repo.create({
-        demander,
+        publisher,
         order_type,
         extra_info
       });

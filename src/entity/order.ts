@@ -1,6 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  OneToOne,
+  JoinColumn,
+  Column,
+  OneToMany
+} from "typeorm";
 
 import Bidders from "./bidders";
+import User from "./user";
 
 export enum ORDER_STATUS {
   bidding = 1,
@@ -24,8 +32,9 @@ export default class LegalOrder {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  customer_openid: string;
+  @OneToOne(type => User)
+  @JoinColumn({ name: "publisher_id" })
+  publisher: User;
 
   @Column() // 订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
   order_type: number;
