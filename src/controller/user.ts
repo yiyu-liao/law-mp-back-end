@@ -5,7 +5,7 @@ export default class UserController {
     ctx.body = await UserService.authSession(ctx);
   }
   static async updateUser(ctx) {
-    ctx.body = await UserService.updateUser(ctx);
+    ctx.body = await UserService.updateUserInfo(ctx);
   }
   static async getUserInfo(ctx) {
     ctx.body = await UserService.getUserInfo(ctx);

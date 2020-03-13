@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
-  OneToOne,
   JoinColumn
 } from "typeorm";
 import LegalAdvice from "./legal-advice";
@@ -18,22 +17,25 @@ export default class AdviceReply {
   @Column({ default: 0 })
   pid: number;
 
-  // @Column()
-  // legal_advice_id: number;
-
   @Column({ charset: "utf8", type: "varchar" })
   content: string;
 
-  @OneToOne(type => User)
+  @CreateDateColumn({ type: "timestamp" })
+  create_time: string;
+
+  @ManyToOne(
+    type => User,
+    user => user.reply_from
+  )
   @JoinColumn({ name: "from_id" })
   from: User;
 
-  @OneToOne(type => User)
+  @ManyToOne(
+    type => User,
+    user => user.reply_to
+  )
   @JoinColumn({ name: "to_id" })
   to: User;
-
-  @CreateDateColumn({ type: "timestamp" })
-  create_time: string;
 
   @ManyToOne(
     type => LegalAdvice,

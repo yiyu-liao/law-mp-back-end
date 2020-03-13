@@ -65,6 +65,7 @@ export default class LegalAdviceService {
    * @apiGroup Legal Advice
    *
    * @apiParam {Number} advice_id  咨询id
+   * @apiParam {Number} title  咨询title
    * @apiParam {Number} pid 回复目标评论的id, 若是目标是咨询内容，pid为0
    * @apiParam {String} content  回复内容
    * @apiParam {String} from_openid  回复者openid
@@ -79,6 +80,7 @@ export default class LegalAdviceService {
 
     const {
       advice_id,
+      title,
       pid,
       content,
       to_openid,
@@ -105,7 +107,7 @@ export default class LegalAdviceService {
       touser: to_openid,
       replyer: from.real_name,
       content,
-      title: ""
+      title: title
     });
 
     return {

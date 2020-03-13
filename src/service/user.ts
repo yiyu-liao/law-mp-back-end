@@ -70,21 +70,43 @@ export default class UserService {
 
   /**
    * @api {post} /user/update 更新用户信息
-   * @apiName register
+   * @apiName update
    * @apiGroup User
+   * @apiParam {Number} user_id  用户id, 非openid
+   * @apiParam {String} avatar_url  头像url(base_info)
+   * @apiParam {String} nick_name  昵称(base_info)
+   * @apiParam {String} real_name  真实姓名(base_info)
+   * @apiParam {Number} verify_status  验证状态(base_info) // 1 => 未认证， 2 => 申请认证， 3 => 已认证
+   * @apiParam {String} balance  余额(extra_profile)
+   * @apiParam {String} office  所在律所(extra_profile)
+   * @apiParam {String} location  所在地区(extra_profile)
+   * @apiParam {String} experience_year  经验年限(extra_profile)
+   * @apiParam {String} id_photo  正冠照片(extra_profile)
+   * @apiParam {String} license_photo  律师执业证照片(extra_profile)
+   * @apiParam {String} license_no  律师执业编号(extra_profile)
+   * @apiParam {String} license_no  律师执业编号(extra_profile)
    *
-   * @apiParam {Number} user_id  用户id, 非openid.
-   * @apiParam {Number} avatar_url 用户头像url
-   * @apiParam {Number} nick_name  用户昵称
-   * @apiParam {Number} real_name  用户真实姓名
-   * @apiParam {Number} role  用户角色  0 => null role, 1 => customer, 2 => lawyer
-   * @apiParam {Number} verify_status  用户状态 1 => 未认证， 2 => 认证中， 3 => 已认证
-   * @apiSuccess {String} code S_Ok
+   * @apiParamExample {json} Request-Example:
+   *     {
+   *       "user_id": 4711,
+   *       "base_info": {
+   *          "real_name": "吴彦祖"
+   *       },
+   *       "extra_profile": {
+   *          "location": "xxx"
+   *
+   *       }
+   *     }
+   *
+   *
+   * @apiSuccess {String} code 200
+   *
    */
-  static async updateUser(context?: Context) {
+  static async updateUserInfo(context?: Context) {
     const userRepo = this.getRepository<User>(User);
+    const lawyerRepo = this.getRepository<Lawyer>(Lawyer);
 
-    const { user_id } = context.request.body;
+    const { user_id, base_info, extra_profile } = context.request.body;
 
     if (!user_id) {
       const error = {
@@ -94,56 +116,40 @@ export default class UserService {
       throw new HttpException(error);
     }
 
-    const user = userRepo.create({
-      ...(context.request.body as User)
-    });
+    if (base_info) {
+      const user = userRepo.create({
+        ...(JSON.parse(base_info) as User)
+      });
 
-    let result = await userRepo.update(user_id, user);
+      await userRepo.update(user_id, user);
+    }
+
+    if (extra_profile) {
+      let tempUser = await userRepo.findOne(user_id, {
+        relations: ["extra_profile"]
+      });
+      let oldProfile = tempUser.extra_profile;
+      let updatePayload = JSON.parse(extra_profile);
+
+      if (oldProfile) {
+        let mergered = Object.assign({}, oldProfile, updatePayload);
+        let newProfile = lawyerRepo.create({
+          ...(mergered as Lawyer)
+        });
+        tempUser.extra_profile = newProfile;
+        await userRepo.save(tempUser);
+      } else {
+        let newProfile = lawyerRepo.create({
+          user: tempUser,
+          ...(updatePayload as Lawyer)
+        });
+        await lawyerRepo.save(newProfile);
+      }
+    }
+
     return {
       code: ResponseCode.SUCCESS.code,
-      data: result,
-      message: ResponseCode.SUCCESS.msg
-    };
-  }
-
-  /**
-   * @api {post} /user/applyVerify 律师申请认证
-   * @apiName LawyerapplyVerify
-   * @apiGroup User
-   *
-   * @apiParam {Number} user_id  用户id, 非openid
-   * @apiParam {Number} office  所在律所
-   * @apiParam {Number} location  所在地区
-   * @apiParam {Number} experience_year  经验年限
-   * @apiParam {String} id_photo  正冠照片
-   * @apiParam {String} license_photo  律师执业证照片
-   * @apiParam {String} license_no  律师执业编号
-   *
-   *
-   * @apiSuccess {String} code S_Ok
-   *
-   */
-  static async updateLawyerVerifyInfo(context?: Context) {
-    const userRepo = this.getRepository<User>(User);
-
-    const params = context.request.body;
-    let userId = params.user_id;
-    delete params.user_id;
-
-    let lawyer = new Lawyer();
-    lawyer = {
-      ...params
-    };
-
-    let user = userRepo.create({
-      id: userId,
-      extra_profile: lawyer
-    });
-    let result = userRepo.update(userId, user);
-    return {
-      code: ResponseCode.SUCCESS.code,
-      data: result,
-      message: ResponseCode.SUCCESS.msg
+      msg: ResponseCode.SUCCESS.msg
     };
   }
 

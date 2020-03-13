@@ -4,20 +4,20 @@ import {
   Column,
   OneToOne,
   JoinColumn,
-  OneToMany,
-  PrimaryColumn
+  OneToMany
 } from "typeorm";
 
 import Lawyer from "./lawyer";
 import LegalAdvice from "./legal-advice";
 import Order from "./order";
+import AdviceReply from "./advice-reply";
 
 @Entity()
 export default class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   openid: string;
 
   @Column({ default: null })
@@ -35,7 +35,11 @@ export default class User {
   @Column({ default: 1 })
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
 
-  @OneToOne(type => Lawyer)
+  @OneToOne(
+    type => Lawyer,
+    lawyer => lawyer.user,
+    { cascade: true }
+  )
   @JoinColumn({ name: "extra_profile_id" })
   extra_profile: Lawyer;
 
@@ -50,4 +54,16 @@ export default class User {
     order => order.publisher
   )
   publisher: Order[];
+
+  @OneToMany(
+    type => AdviceReply,
+    reply => reply.from
+  )
+  reply_from: AdviceReply[];
+
+  @OneToMany(
+    type => AdviceReply,
+    reply => reply.to
+  )
+  reply_to: AdviceReply[];
 }
