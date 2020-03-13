@@ -1,5 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToOne,
+  JoinColumn
+} from "typeorm";
 import Order from "./order";
+import { type } from "os";
+import User from "./user";
 
 @Entity()
 export default class Bidders {
@@ -9,13 +18,14 @@ export default class Bidders {
   @Column()
   price: number;
 
-  // To Review，是否考虑设计成联表查询，拿出userInfo
-  @Column()
-  lawyer_openid: string;
+  @OneToOne(type => User)
+  @JoinColumn({ name: "lawyer_info_id" })
+  lawyer: User;
 
   @ManyToOne(
     type => Order,
     order => order.bidders
   )
+  @JoinColumn({ name: "order_id" })
   order: Order;
 }

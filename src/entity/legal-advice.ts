@@ -45,6 +45,7 @@ export default class LegalAdvice {
     type => User,
     user => user.advices
   )
+  @JoinColumn({ name: "advicer_id" })
   advicer: User;
 
   @OneToMany(

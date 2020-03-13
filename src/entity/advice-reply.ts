@@ -39,5 +39,6 @@ export default class AdviceReply {
     type => LegalAdvice,
     adivice => adivice.replies
   )
+  @JoinColumn({ name: "advice_id" })
   advice: LegalAdvice;
 }

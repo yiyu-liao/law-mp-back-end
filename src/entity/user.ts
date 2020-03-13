@@ -10,7 +10,7 @@ import {
 
 import Lawyer from "./lawyer";
 import LegalAdvice from "./legal-advice";
-import { type } from "os";
+import Order from "./order";
 
 @Entity()
 export default class User {
@@ -44,4 +44,10 @@ export default class User {
     advice => advice.advicer
   )
   advices: LegalAdvice[];
+
+  @OneToMany(
+    type => Order,
+    order => order.publisher
+  )
+  publisher: Order[];
 }

@@ -65,6 +65,11 @@ const order = [
     action: OrderServer.bidOrder
   },
   {
+    path: "/order/list",
+    method: "post",
+    action: OrderServer.getOrderList
+  },
+  {
     path: "/order/detail",
     method: "post",
     action: OrderServer.getOrderDetail

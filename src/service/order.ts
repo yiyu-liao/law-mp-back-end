@@ -19,7 +19,7 @@ export default class OrderService {
    * @apiName publish
    * @apiGroup Order
    *
-   * @apiParam {Number} customer_openid  客户唯一openid.
+   * @apiParam {Number} customer_id  客户id.
    * @apiParam {Number} order_type  订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
    * @apiParam {Object} extra_info 自定义的表单提交数据 { description?: string, response_time?: number, limit_time?: number; ... }
    *
@@ -29,9 +29,9 @@ export default class OrderService {
     const Repo = this.getRepository<Order>(Order);
     const userRepo = this.getRepository<User>(User);
 
-    const { customer_openid, order_type, extra_info } = context.request.body;
+    const { customer_id, order_type, extra_info } = context.request.body;
 
-    if (!customer_openid || !order_type) {
+    if (!customer_id || !order_type) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
@@ -39,32 +39,24 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    // TO Review, 是否有必要查找数据库拿到所有信息
-    let publisher = await userRepo.findOne({
-      where: { openid: customer_openid }
+    // let publisher = await userRepo.findOne(customer_id);
+
+    let publisher = new User();
+    publisher.id = customer_id;
+
+    const order = Repo.create({
+      publisher,
+      order_type,
+      extra_info: JSON.parse(extra_info)
     });
 
-    try {
-      const order = Repo.create({
-        publisher,
-        order_type,
-        extra_info
-      });
+    const result = await Repo.save(order);
 
-      const result = await Repo.save(order);
-
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        message: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        message: e.message
-      };
-      throw new HttpException(error);
-    }
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -73,7 +65,7 @@ export default class OrderService {
    * @apiGroup Order
    *
    * @apiParam {Number} order_id  订单id.
-   * @apiParam {Number} lawyer_openid  律师唯一openid.
+   * @apiParam {Number} lawyer_id  律师id.
    * @apiParam {Number} price 报价
    *
    * @apiSuccess {String} code S_Ok
@@ -81,9 +73,9 @@ export default class OrderService {
   static async bidOrder(context?: Context) {
     const bidderRepo = this.getRepository<Bidders>(Bidders);
 
-    const { order_id, lawyer_openid, price } = context.request.body;
+    const { order_id, lawyer_id, price } = context.request.body;
 
-    if (!order_id || !lawyer_openid || !price) {
+    if (!order_id || !lawyer_id || !price) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
@@ -91,29 +83,24 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    try {
-      let order = new Order();
-      order.id = order_id;
+    let order = new Order();
+    order.id = order_id;
 
-      let bidder = bidderRepo.create({
-        lawyer_openid,
-        price,
-        order
-      });
+    let lawyer = new User();
+    lawyer.id = lawyer_id;
 
-      const res = await bidderRepo.save(bidder);
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: res,
-        message: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        message: e.message
-      };
-      throw new HttpException(error);
-    }
+    let bidder = bidderRepo.create({
+      lawyer,
+      price,
+      order
+    });
+
+    const res = await bidderRepo.save(bidder);
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: res,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -136,26 +123,18 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    try {
-      let result = await getRepository(Order)
-        .createQueryBuilder("Order")
-        .where("Order.type = :type", { type })
-        .leftJoinAndSelect("Order.bidders", "bidders")
-        .leftJoinAndSelect("Order.demander", "demander")
-        .getMany();
+    let result = await getRepository(Order)
+      .createQueryBuilder("Order")
+      .where("Order.order_type = :type", { type })
+      .leftJoinAndSelect("Order.bidders", "bidders")
+      .leftJoinAndSelect("Order.publisher", "publisher")
+      .getMany();
 
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: result,
-        message: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        message: e.message
-      };
-      throw new HttpException(error);
-    }
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -179,22 +158,19 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    try {
-      const orders = await orderRepo.findOne(order_id, {
-        relations: ["demander", "bidders"]
-      });
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: orders,
-        message: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        message: e.message
-      };
-      throw new HttpException(error);
-    }
+    let result = await getRepository(Order)
+      .createQueryBuilder("Order")
+      .where("Order.id = :order_id", { order_id })
+      .leftJoinAndSelect("Order.bidders", "bidders")
+      .leftJoinAndSelect("bidders.lawyer", "lawyer")
+      .leftJoinAndSelect("Order.publisher", "publisher")
+      .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -220,24 +196,16 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    try {
-      let order = orderRepo.create({
-        server_openid,
-        status: ORDER_STATUS.pending
-      });
-      const res = await orderRepo.update(order_id, order);
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: res,
-        message: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        message: e.message
-      };
-      throw new HttpException(error);
-    }
+    let order = orderRepo.create({
+      server_openid,
+      status: ORDER_STATUS.pending
+    });
+    const res = await orderRepo.update(order_id, order);
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: res,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 
   /**
@@ -266,21 +234,13 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    try {
-      let order = new Order();
-      order.status = status;
-      const res = await orderRepo.update(order_id, order);
-      return {
-        code: ResponseCode.SUCCESS.code,
-        data: res,
-        message: ResponseCode.SUCCESS.msg
-      };
-    } catch (e) {
-      const error = {
-        code: e.code,
-        message: e.message
-      };
-      throw new HttpException(error);
-    }
+    let order = new Order();
+    order.status = status;
+    const res = await orderRepo.update(order_id, order);
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: res,
+      message: ResponseCode.SUCCESS.msg
+    };
   }
 }

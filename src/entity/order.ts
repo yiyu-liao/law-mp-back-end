@@ -1,7 +1,7 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Column,
   OneToMany
@@ -32,7 +32,10 @@ export default class LegalOrder {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(type => User)
+  @ManyToOne(
+    type => User,
+    user => user.advices
+  )
   @JoinColumn({ name: "publisher_id" })
   publisher: User;
 
