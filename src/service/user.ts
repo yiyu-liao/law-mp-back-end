@@ -1,5 +1,5 @@
 import { Context } from "koa";
-import { getManager, Repository } from "typeorm";
+import { getManager, Repository, getRepository } from "typeorm";
 import User from "@src/entity/user";
 import Lawyer from "@src/entity/lawyer";
 
@@ -117,11 +117,19 @@ export default class UserService {
     }
 
     if (base_info) {
-      const user = userRepo.create({
-        ...(JSON.parse(base_info) as User)
-      });
+      let toUpdateFiles: Partial<User> = JSON.parse(base_info);
+      for (const key in toUpdateFiles) {
+        if (!toUpdateFiles[key]) {
+          delete toUpdateFiles[key];
+        }
+      }
+      if (Object.keys(toUpdateFiles).length) {
+        const user = userRepo.create({
+          ...toUpdateFiles
+        });
 
-      await userRepo.update(user_id, user);
+        await userRepo.update(user_id, user);
+      }
     }
 
     if (extra_profile) {
@@ -129,21 +137,29 @@ export default class UserService {
         relations: ["extra_profile"]
       });
       let oldProfile = tempUser.extra_profile;
-      let updatePayload = JSON.parse(extra_profile);
+      let updatePayload: Partial<User> = JSON.parse(extra_profile);
 
-      if (oldProfile) {
-        let mergered = Object.assign({}, oldProfile, updatePayload);
-        let newProfile = lawyerRepo.create({
-          ...(mergered as Lawyer)
-        });
-        tempUser.extra_profile = newProfile;
-        await userRepo.save(tempUser);
-      } else {
-        let newProfile = lawyerRepo.create({
-          user: tempUser,
-          ...(updatePayload as Lawyer)
-        });
-        await lawyerRepo.save(newProfile);
+      for (const key in updatePayload) {
+        if (!updatePayload[key]) {
+          delete updatePayload[key];
+        }
+      }
+
+      if (Object.keys(updatePayload).length) {
+        if (oldProfile) {
+          let mergered = Object.assign({}, oldProfile, updatePayload);
+          let newProfile = lawyerRepo.create({
+            ...(mergered as Lawyer)
+          });
+          tempUser.extra_profile = newProfile;
+          await userRepo.save(tempUser);
+        } else {
+          let newProfile = lawyerRepo.create({
+            user: tempUser,
+            ...(updatePayload as Lawyer)
+          });
+          await lawyerRepo.save(newProfile);
+        }
       }
     }
 
@@ -182,6 +198,40 @@ export default class UserService {
     return {
       code: ResponseCode.SUCCESS.code,
       data: user ? user : null,
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /user/relateReply 获取与自己相关评论咨询
+   * @apiName relationReply
+   * @apiGroup User
+   *
+   * @apiParam {Number} user_id  用户id
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getUserRelateReply(context?: Context) {
+    const { user_id } = context.request.body;
+
+    if (!user_id) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    let result = await getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.id = :user_id", { user_id })
+      .leftJoinAndSelect("user.create_replies", "create_replies")
+      .leftJoinAndSelect("user.receive_replies", "receive_replies")
+      .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
       message: ResponseCode.SUCCESS.msg
     };
   }

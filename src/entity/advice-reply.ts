@@ -25,14 +25,14 @@ export default class AdviceReply {
 
   @ManyToOne(
     type => User,
-    user => user.reply_from
+    user => user.create_replies
   )
   @JoinColumn({ name: "from_id" })
   from: User;
 
   @ManyToOne(
     type => User,
-    user => user.reply_to
+    user => user.receive_replies
   )
   @JoinColumn({ name: "to_id" })
   to: User;

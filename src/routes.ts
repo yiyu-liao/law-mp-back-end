@@ -17,6 +17,11 @@ const user = [
     path: "/user/detail",
     method: "post",
     action: UserController.getUserInfo
+  },
+  {
+    path: "/user/relateReply",
+    method: "post",
+    action: UserController.getUserRelateReply
   }
 ];
 
@@ -40,11 +45,6 @@ const legalAdvice = [
     path: "/advice/customer",
     method: "post",
     action: LegalAdviceController.getCustomerAllAdvices
-  },
-  {
-    path: "/advice/lawyer",
-    method: "post",
-    action: LegalAdviceController.getLawyerReplyAdvice
   },
   {
     path: "/advice/all",

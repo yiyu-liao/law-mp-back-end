@@ -59,11 +59,11 @@ export default class User {
     type => AdviceReply,
     reply => reply.from
   )
-  reply_from: AdviceReply[];
+  create_replies: AdviceReply[];
 
   @OneToMany(
     type => AdviceReply,
     reply => reply.to
   )
-  reply_to: AdviceReply[];
+  receive_replies: AdviceReply[];
 }

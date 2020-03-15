@@ -215,44 +215,6 @@ export default class LegalAdviceService {
     };
   }
 
-  /**
-   * @api {post} /advice/lawyer 获取律师回复的咨询列表
-   * @apiName getLawyerReplyAdvice
-   * @apiGroup Legal Advice
-   *
-   * @apiParam {Number} lawyer_openid  律师openid.
-   *
-   * @apiSuccess {String} code S_Ok
-   */
-  static async getLawyerReplyAdvice(context?: Context) {
-    const { lawyer_openid } = context.request.body;
-
-    if (!lawyer_openid) {
-      const error = {
-        code: ResponseCode.ERROR_PARAMS.code,
-        message: ResponseCode.ERROR_PARAMS.msg
-      };
-      throw new HttpException(error);
-    }
-
-    let result = await getRepository(LegalAdvice)
-      .createQueryBuilder("advice")
-      .innerJoinAndSelect(
-        "advice.replies",
-        "reply",
-        "reply.from_openid = :lawyer_openid",
-        { lawyer_openid }
-      )
-      .leftJoinAndSelect("advice.advicer", "advicer")
-      .getMany();
-
-    return {
-      code: ResponseCode.SUCCESS.code,
-      data: result,
-      message: ResponseCode.SUCCESS.msg
-    };
-  }
-
   static async deleteAdvice() {}
 
   static async updateAdice() {}
