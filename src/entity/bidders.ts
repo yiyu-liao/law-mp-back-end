@@ -18,7 +18,10 @@ export default class Bidders {
   @Column()
   price: number;
 
-  @OneToOne(type => User)
+  @ManyToOne(
+    type => User,
+    user => user.bid_info
+  )
   @JoinColumn({ name: "lawyer_info_id" })
   lawyer: User;
 

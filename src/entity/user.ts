@@ -11,6 +11,7 @@ import Lawyer from "./lawyer";
 import LegalAdvice from "./legal-advice";
 import Order from "./order";
 import AdviceReply from "./advice-reply";
+import Bidders from "./bidders";
 
 @Entity()
 export default class User {
@@ -66,4 +67,10 @@ export default class User {
     reply => reply.to
   )
   receive_replies: AdviceReply[];
+
+  @OneToMany(
+    type => Bidders,
+    bidder => bidder.lawyer
+  )
+  bid_info: Bidders[];
 }

@@ -95,10 +95,9 @@ export default class OrderService {
       order
     });
 
-    const res = await bidderRepo.save(bidder);
+    await bidderRepo.save(bidder);
     return {
       code: ResponseCode.SUCCESS.code,
-      data: res,
       message: ResponseCode.SUCCESS.msg
     };
   }
@@ -126,6 +125,7 @@ export default class OrderService {
     let result = await getRepository(Order)
       .createQueryBuilder("Order")
       .where("Order.order_type = :type", { type })
+      .where("Order.status = :status", { status: ORDER_STATUS.pending })
       .leftJoinAndSelect("Order.bidders", "bidders")
       .leftJoinAndSelect("Order.publisher", "publisher")
       .getMany();
@@ -163,7 +163,9 @@ export default class OrderService {
       .where("Order.id = :order_id", { order_id })
       .leftJoinAndSelect("Order.bidders", "bidders")
       .leftJoinAndSelect("bidders.lawyer", "lawyer")
+      .leftJoinAndSelect("lawyer.extra_profile", "bidder_extra_profile")
       .leftJoinAndSelect("Order.publisher", "publisher")
+      .leftJoinAndSelect("publisher.extra_profile", "publisher_extra_profile")
       .getMany();
 
     return {
