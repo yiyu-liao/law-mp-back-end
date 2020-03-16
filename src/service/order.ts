@@ -125,7 +125,7 @@ export default class OrderService {
     let result = await getRepository(Order)
       .createQueryBuilder("Order")
       .where("Order.order_type = :type", { type })
-      .where("Order.status = :status", { status: ORDER_STATUS.pending })
+      .where("Order.status = :status", { status: ORDER_STATUS.bidding })
       .leftJoinAndSelect("Order.bidders", "bidders")
       .leftJoinAndSelect("Order.publisher", "publisher")
       .getMany();
