@@ -19,4 +19,8 @@ export default class UserController {
   static async getAllAdvices(ctx) {
     ctx.body = await LegalAdviceService.getAllAdvices(ctx);
   }
+
+  static async getAdivicesRelateReplyUser(ctx) {
+    ctx.body = await LegalAdviceService.getAdivicesRelateReplyUser(ctx);
+  }
 }

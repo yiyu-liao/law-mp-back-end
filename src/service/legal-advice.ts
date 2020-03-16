@@ -182,14 +182,14 @@ export default class LegalAdviceService {
    * @apiName getCustomerAllAdvices
    * @apiGroup Legal Advice
    *
-   * @apiParam {Number} customer_openid  客户openid.
+   * @apiParam {Number} user_id  客户id
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getCustomerAllAdvices(context?: Context) {
-    const { customer_openid } = context.request.body;
+    const { user_id } = context.request.body;
 
-    if (!customer_openid) {
+    if (!user_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
@@ -202,10 +202,45 @@ export default class LegalAdviceService {
       .innerJoinAndSelect(
         "Advice.advicer",
         "advicer",
-        "advicer.openid = :customer_openid",
-        { customer_openid }
+        "advicer.id = :user_id",
+        { user_id }
       )
       .leftJoinAndSelect("Advice.replies", "replies")
+      .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /advice/relateReplyUser 获取用户的咨询列表
+   * @apiName getCustomerAllAdvices
+   * @apiGroup Legal Advice
+   *
+   * @apiParam {Number} user_id  律师id
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getAdivicesRelateReplyUser(context?: Context) {
+    const { user_id } = context.request.body;
+
+    if (!user_id) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    let result = await getRepository(LegalAdvice)
+      .createQueryBuilder("Advice")
+      .innerJoinAndSelect("Advice.replies", "replies")
+      .leftJoinAndSelect("replies.from", "from", "from.id = :id", {
+        id: user_id
+      })
       .getMany();
 
     return {

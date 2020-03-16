@@ -50,6 +50,11 @@ const legalAdvice = [
     path: "/advice/all",
     method: "get",
     action: LegalAdviceController.getAllAdvices
+  },
+  {
+    path: "/advice/relateReplyUser",
+    method: "post",
+    action: LegalAdviceController.getAdivicesRelateReplyUser
   }
 ];
 
