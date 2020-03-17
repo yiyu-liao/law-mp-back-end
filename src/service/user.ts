@@ -228,7 +228,7 @@ export default class UserService {
       .leftJoinAndSelect("user.create_replies", "create_replies")
       .leftJoinAndSelect("user.receive_replies", "receive_replies")
       .leftJoinAndSelect("create_replies.advice", "create_advice")
-      // .leftJoinAndSelect("receive_replies.advice", "reply_advice")
+      .leftJoinAndSelect("receive_replies.advice", "reply_advice")
       .getMany();
 
     return {

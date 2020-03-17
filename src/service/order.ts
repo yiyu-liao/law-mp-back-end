@@ -125,8 +125,9 @@ export default class OrderService {
     let result = await getRepository(Order)
       .createQueryBuilder("Order")
       .where("Order.order_type = :type", { type })
-      .where("Order.status = :status", { status: ORDER_STATUS.bidding })
+      .andWhere("Order.status = :status", { status: ORDER_STATUS.bidding })
       .leftJoinAndSelect("Order.bidders", "bidders")
+      .leftJoinAndSelect("bidders.lawyer", "lawyer")
       .leftJoinAndSelect("Order.publisher", "publisher")
       .getMany();
 
@@ -166,7 +167,7 @@ export default class OrderService {
       .leftJoinAndSelect("lawyer.extra_profile", "bidder_extra_profile")
       .leftJoinAndSelect("Order.publisher", "publisher")
       .leftJoinAndSelect("publisher.extra_profile", "publisher_extra_profile")
-      .getMany();
+      .getOne();
 
     return {
       code: ResponseCode.SUCCESS.code,
