@@ -4,6 +4,7 @@ import {
   ManyToOne,
   JoinColumn,
   Column,
+  CreateDateColumn,
   OneToMany
 } from "typeorm";
 
@@ -19,13 +20,13 @@ export enum ORDER_STATUS {
   cancel = 6
 }
 
-export interface IExtraInfo {
-  description?: string;
+// export interface IExtraInfo {
+//   description?: string;
 
-  response_time?: number;
+//   response_time?: number;
 
-  limit_time?: number;
-}
+//   limit_time?: number;
+// }
 
 @Entity()
 export default class LegalOrder {
@@ -44,7 +45,7 @@ export default class LegalOrder {
 
   // TO DO: add type
   @Column({ type: "simple-json", default: null })
-  extra_info: IExtraInfo;
+  extra_info: any;
 
   @Column({ default: null })
   server_openid: string;
@@ -57,4 +58,7 @@ export default class LegalOrder {
     bidder => bidder.order
   )
   bidders: Bidders[];
+
+  @CreateDateColumn({ type: "timestamp" })
+  create_time: string;
 }

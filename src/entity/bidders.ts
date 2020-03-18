@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToOne,
+  CreateDateColumn,
   JoinColumn
 } from "typeorm";
 import Order from "./order";
@@ -31,4 +32,7 @@ export default class Bidders {
   )
   @JoinColumn({ name: "order_id" })
   order: Order;
+
+  @CreateDateColumn({ type: "timestamp" })
+  create_time: string;
 }
