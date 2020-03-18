@@ -40,6 +40,7 @@ export default class LegalAdviceService {
       throw new HttpException(error);
     }
 
+    // TO DO: 以user_id关联发布者信息
     const user = await this.getRepository<User>(User).findOne({
       where: { openid: advicer_openid }
     });
@@ -90,6 +91,7 @@ export default class LegalAdviceService {
     const advice = new LegalAdvice();
     advice.id = advice_id;
 
+    // TO DO: 以user_id关联用户信息
     let from = await UserRepo.findOne({ where: { openid: from_openid } });
     let to = await UserRepo.findOne({ where: { openid: to_openid } });
 

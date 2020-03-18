@@ -66,6 +66,7 @@ export default class WxService {
 
     if (!ACCESS_TOKEN) return;
     const url = `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${ACCESS_TOKEN}`;
+    console.log("touser", payload.touser);
     return Axios.post(url, {
       data: {
         access_token: ACCESS_TOKEN,
@@ -73,16 +74,16 @@ export default class WxService {
         template_id: Config.subscribe_temple_id,
         // page: payload.page,
         data: {
-          key1: {
+          thing1: {
             value: payload.content
           },
-          key2: {
+          time2: {
             value: time
           },
-          key3: {
+          name3: {
             value: payload.replyer
           },
-          key4: {
+          thing4: {
             value: payload.title
           }
         }

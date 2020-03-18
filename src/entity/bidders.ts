@@ -22,7 +22,7 @@ export default class Bidders {
     type => User,
     user => user.bid_info
   )
-  @JoinColumn({ name: "lawyer_info_id" })
+  @JoinColumn({ name: "lawyer_id" })
   lawyer: User;
 
   @ManyToOne(

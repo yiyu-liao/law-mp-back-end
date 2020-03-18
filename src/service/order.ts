@@ -139,6 +139,86 @@ export default class OrderService {
   }
 
   /**
+   * @api {post} /order/customerList 获取需求订单list
+   * @apiName getOrderList
+   * @apiGroup Order
+   *
+   * @apiParam {Number} type  1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
+   * @apiParam {Number} user_id  用户id
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getCustomerList(context?: Context) {
+    const { user_id, type } = context.request.body;
+
+    if (!type) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    let result = await getRepository(Order)
+      .createQueryBuilder("order")
+      .where("order.order_type = :type", { type })
+      .leftJoinAndSelect("order.bidders", "bidders")
+      .leftJoinAndSelect(
+        "order.publisher",
+        "publisher",
+        "publisher.id =:user_id",
+        { user_id }
+      )
+      .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /order/lawyerList 获取需求订单list
+   * @apiName getOrderList
+   * @apiGroup Order
+   *
+   * @apiParam {Number} type  1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
+   * @apiParam {Number} user_id  用户id
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getLawyerList(context?: Context) {
+    const { user_id, type } = context.request.body;
+
+    if (!type) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    let result = await getRepository(Order)
+      .createQueryBuilder("order")
+      .where("order.order_type = :type", { type })
+      .leftJoinAndSelect("order.publisher", "publisher")
+      .innerJoinAndSelect(
+        "order.bidders",
+        "bidder",
+        "bidder.lawyer_id = :user_id",
+        { user_id }
+      )
+      .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
    * @api {post} /order/detail 获取订单详情
    * @apiName getOrderDetail
    * @apiGroup Order
@@ -148,7 +228,6 @@ export default class OrderService {
    * @apiSuccess {String} code S_Ok
    */
   static async getOrderDetail(context?: Context) {
-    const orderRepo = this.getRepository<Order>(Order);
     const { order_id } = context.request.body;
 
     if (!order_id) {
@@ -160,12 +239,12 @@ export default class OrderService {
     }
 
     let result = await getRepository(Order)
-      .createQueryBuilder("Order")
-      .where("Order.id = :order_id", { order_id })
-      .leftJoinAndSelect("Order.bidders", "bidders")
+      .createQueryBuilder("order")
+      .where("order.id = :order_id", { order_id })
+      .leftJoinAndSelect("order.bidders", "bidders")
       .leftJoinAndSelect("bidders.lawyer", "lawyer")
       .leftJoinAndSelect("lawyer.extra_profile", "bidder_extra_profile")
-      .leftJoinAndSelect("Order.publisher", "publisher")
+      .leftJoinAndSelect("order.publisher", "publisher")
       .leftJoinAndSelect("publisher.extra_profile", "publisher_extra_profile")
       .getOne();
 

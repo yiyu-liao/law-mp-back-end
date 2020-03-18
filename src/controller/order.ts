@@ -19,4 +19,10 @@ export default class OrderController {
   static async getOrderList(ctx) {
     ctx.body = await OrderServer.getOrderList(ctx);
   }
+  static async getCustomerList(ctx) {
+    ctx.body = await OrderServer.getCustomerList(ctx);
+  }
+  static async getLawyerList(ctx) {
+    ctx.body = await OrderServer.getLawyerList(ctx);
+  }
 }
