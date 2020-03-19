@@ -24,7 +24,7 @@ export enum ADVICE_STATUS {
 }
 
 @Entity()
-export default class LegalAdvice {
+export default class Advice {
   @PrimaryGeneratedColumn()
   id: number;
 

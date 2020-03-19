@@ -35,14 +35,13 @@ export default class UserService {
 
     if (!errcode) {
       const userRepo = this.getRepository<User>(User);
-      const user = await userRepo.findOne({
-        where: { openid },
+      const user = await userRepo.findOne(openid, {
         relations: ["extra_profile"]
       });
       if (!user) {
         let newUser = await userRepo.save(
           userRepo.create({
-            openid,
+            uid: openid,
             nick_name: nickName,
             avatar_url: avatarUrl,
             role: 0
@@ -72,7 +71,7 @@ export default class UserService {
    * @api {post} /user/update 更新用户信息
    * @apiName update
    * @apiGroup User
-   * @apiParam {Number} user_id  用户id, 非openid
+   * @apiParam {Number} user_id
    * @apiParam {String} avatar_url  头像url(base_info)
    * @apiParam {String} nick_name  昵称(base_info)
    * @apiParam {String} real_name  真实姓名(base_info)
@@ -174,7 +173,7 @@ export default class UserService {
    * @apiName detail
    * @apiGroup User
    *
-   * @apiParam {Number} openid  用户唯一openid.
+   * @apiParam {Number} user_id  用户id.
    *
    * @apiSuccess {String} code 200
    *
@@ -182,17 +181,16 @@ export default class UserService {
   static async getUserInfo(context?: Context) {
     const userRepo = this.getRepository<User>(User);
 
-    const { openid } = context.request.body;
+    const { user_id } = context.request.body;
 
-    if (!openid) {
+    if (!user_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
-    const user = await userRepo.findOne({
-      where: { openid },
+    const user = await userRepo.findOne(user_id, {
       relations: ["extra_profile"]
     });
     return {
@@ -224,7 +222,7 @@ export default class UserService {
 
     let result = await getRepository(User)
       .createQueryBuilder("user")
-      .where("user.id = :user_id", { user_id })
+      .where("user.uid = :user_id", { user_id })
       .leftJoinAndSelect("user.create_replies", "create_replies")
       .leftJoinAndSelect("user.receive_replies", "receive_replies")
       .leftJoinAndSelect("create_replies.advice", "create_advice")

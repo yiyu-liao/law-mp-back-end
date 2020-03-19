@@ -7,12 +7,11 @@ import {
   CreateDateColumn,
   JoinColumn
 } from "typeorm";
-import Order from "./order";
-import { type } from "os";
+import Order from "./case";
 import User from "./user";
 
 @Entity()
-export default class Bidders {
+export default class caseBidder {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -30,8 +29,8 @@ export default class Bidders {
     type => Order,
     order => order.bidders
   )
-  @JoinColumn({ name: "order_id" })
-  order: Order;
+  @JoinColumn({ name: "case_id" })
+  case: Order;
 
   @CreateDateColumn({ type: "timestamp" })
   create_time: string;

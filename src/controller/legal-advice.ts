@@ -1,4 +1,4 @@
-import LegalAdviceService from "@src/service/legal-advice";
+import LegalAdviceService from "@src/service/advice";
 
 export default class UserController {
   static async getCustomerAllAdvices(ctx) {

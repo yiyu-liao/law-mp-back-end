@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn
 } from "typeorm";
-import LegalAdvice from "./legal-advice";
+import LegalAdvice from "./advice";
 import User from "./user";
 
 @Entity()

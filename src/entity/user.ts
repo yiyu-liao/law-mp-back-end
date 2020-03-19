@@ -4,22 +4,22 @@ import {
   Column,
   OneToOne,
   JoinColumn,
-  OneToMany
+  OneToMany,
+  Index,
+  PrimaryColumn
 } from "typeorm";
 
 import Lawyer from "./lawyer";
-import LegalAdvice from "./legal-advice";
-import Order from "./order";
+import LegalAdvice from "./advice";
+import Order from "./case";
 import AdviceReply from "./advice-reply";
-import Bidders from "./bidders";
+import Bidders from "./case-bidder";
 
 @Entity()
 export default class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ unique: true })
-  openid: string;
+  @PrimaryColumn()
+  @Index()
+  uid: string;
 
   @Column({ default: null })
   avatar_url: string;

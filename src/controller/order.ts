@@ -1,23 +1,23 @@
-import OrderServer from "@src/service/order";
+import OrderServer from "@src/service/case";
 
 export default class OrderController {
-  static async publicOrder(ctx) {
-    ctx.body = await OrderServer.publishOrder(ctx);
+  static async publicCase(ctx) {
+    ctx.body = await OrderServer.publicCase(ctx);
   }
-  static async bidOrder(ctx) {
-    ctx.body = await OrderServer.bidOrder(ctx);
+  static async bidCase(ctx) {
+    ctx.body = await OrderServer.bidCase(ctx);
   }
   static async selectBidder(ctx) {
     ctx.body = await OrderServer.selectBidder(ctx);
   }
-  static async getOrderDetail(ctx) {
-    ctx.body = await OrderServer.getOrderDetail(ctx);
+  static async getCaseDetail(ctx) {
+    ctx.body = await OrderServer.getCaseDetail(ctx);
   }
   static async changeOrderStatus(ctx) {
     ctx.body = await OrderServer.changeOrderStatus(ctx);
   }
-  static async getOrderList(ctx) {
-    ctx.body = await OrderServer.getOrderList(ctx);
+  static async getCaseList(ctx) {
+    ctx.body = await OrderServer.getCaseList(ctx);
   }
   static async getCustomerList(ctx) {
     ctx.body = await OrderServer.getCustomerList(ctx);

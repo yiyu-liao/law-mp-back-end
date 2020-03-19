@@ -25,7 +25,7 @@ const user = [
   }
 ];
 
-const legalAdvice = [
+const Advice = [
   {
     path: "/advice/publish",
     method: "post",
@@ -58,42 +58,42 @@ const legalAdvice = [
   }
 ];
 
-const order = [
+const Case = [
   {
-    path: "/order/publish",
+    path: "/case/publish",
     method: "post",
-    action: OrderServer.publicOrder
+    action: OrderServer.publicCase
   },
   {
-    path: "/order/bid",
+    path: "/case/bid",
     method: "post",
-    action: OrderServer.bidOrder
+    action: OrderServer.bidCase
   },
   {
-    path: "/order/list",
+    path: "/case/list",
     method: "post",
-    action: OrderServer.getOrderList
+    action: OrderServer.getCaseList
   },
   {
-    path: "/order/customerList",
+    path: "/case/customerList",
     method: "post",
     action: OrderServer.getCustomerList
   },
   {
-    path: "/order/lawyerList",
+    path: "/case/lawyerList",
     method: "post",
     action: OrderServer.getLawyerList
   },
   {
-    path: "/order/detail",
+    path: "/case/detail",
     method: "post",
-    action: OrderServer.getOrderDetail
+    action: OrderServer.getCaseDetail
   },
   {
-    path: "/order/selectBidder",
+    path: "/case/selectBidder",
     method: "post",
     action: OrderServer.selectBidder
   }
 ];
 
-export default [...user, ...legalAdvice, ...order];
+export default [...user, ...Advice, ...Case];
