@@ -1,6 +1,6 @@
 import UserController from "@src/controller/user";
-import LegalAdviceController from "@src/controller/legal-advice";
-import OrderServer from "@src/controller/order";
+import LegalAdviceController from "@src/controller/advice";
+import OrderServer from "@src/controller/case";
 
 const user = [
   {

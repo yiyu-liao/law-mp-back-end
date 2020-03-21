@@ -3,7 +3,7 @@ import { Context } from "koa";
 import { getManager, Repository, getRepository } from "typeorm";
 
 import { ResponseCode } from "@src/constant";
-import HttpException from "@src/utils/http-exception";
+import HttpException from "@src/shared/http-exception";
 
 import Advice from "@src/entity/advice";
 import AdviceReply from "@src/entity/advice-reply";

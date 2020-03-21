@@ -10,15 +10,7 @@ import {
 
 import Bidders from "./case-bidder";
 import User from "./user";
-
-export enum ORDER_STATUS {
-  bidding = 1,
-  pending = 2,
-  processing = 3,
-  complete = 4,
-  appeal = 5,
-  cancel = 6
-}
+import { CaseStatus } from "@src/constant";
 
 // export interface IExtraInfo {
 //   description?: string;
@@ -40,6 +32,9 @@ export default class Case {
   @JoinColumn({ name: "publisher_id" })
   publisher: User;
 
+  @Column()
+  select_lawyer_id: string;
+
   @Column() // 案件类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
   case_type: number;
 
@@ -50,7 +45,7 @@ export default class Case {
   @Column({ default: null })
   server_id: string;
 
-  @Column({ default: ORDER_STATUS.bidding })
+  @Column({ default: CaseStatus.bidding })
   status: number;
 
   @OneToMany(

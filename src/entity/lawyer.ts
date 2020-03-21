@@ -12,9 +12,6 @@ export default class Lawyer {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ default: null })
-  balance: number;
-
   @Column({ charset: "utf8", default: null })
   office: string;
 

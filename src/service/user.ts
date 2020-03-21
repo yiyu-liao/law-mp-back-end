@@ -2,9 +2,13 @@ import { Context } from "koa";
 import { getManager, Repository, getRepository } from "typeorm";
 import User from "@src/entity/user";
 import Lawyer from "@src/entity/lawyer";
+import jwt from "jsonwebtoken";
+import fs = require("fs");
+import path = require("path");
+const publicKey = fs.readFileSync(path.join(__dirname, "../../publicKey.pub"));
 
 import { ResponseCode } from "@src/constant";
-import HttpException from "@src/utils/http-exception";
+import HttpException from "@src/shared/http-exception";
 
 import WxService from "./wx";
 
@@ -33,6 +37,14 @@ export default class UserService {
       data: { openid, errcode, errmsg }
     } = await WxService.authCode2Session(js_code);
 
+    const token = jwt.sign(
+      {
+        nick_name: nickName
+      },
+      publicKey,
+      { expiresIn: "7d" }
+    );
+
     if (!errcode) {
       const userRepo = this.getRepository<User>(User);
       const user = await userRepo.findOne(openid, {
@@ -50,12 +62,14 @@ export default class UserService {
         return {
           code: ResponseCode.SUCCESS.code,
           data: newUser ? newUser : null,
+          token: token,
           message: ResponseCode.SUCCESS.msg
         };
       } else {
         return {
           code: ResponseCode.SUCCESS.code,
           data: user ? user : null,
+          token: token,
           message: ResponseCode.SUCCESS.msg
         };
       }
