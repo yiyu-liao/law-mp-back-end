@@ -1,11 +1,13 @@
 import { Context } from "koa";
 import { getManager, Repository, getRepository } from "typeorm";
 
-import Case, { ORDER_STATUS } from "@src/entity/case";
+import Case from "@src/entity/case";
 import Bidders from "@src/entity/case-bidder";
 
+import { CaseStatus } from "@src/constant";
+
 import { ResponseCode } from "@src/constant";
-import HttpException from "@src/utils/http-exception";
+import HttpException from "@src/shared/http-exception";
 import User from "@src/entity/user";
 
 export default class OrderService {
@@ -121,7 +123,7 @@ export default class OrderService {
     let result = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
-      .andWhere("case.status = :status", { status: ORDER_STATUS.bidding })
+      .andWhere("case.status = :status", { status: CaseStatus.bidding })
       .leftJoinAndSelect("case.bidders", "bidders")
       .leftJoinAndSelect("bidders.lawyer", "lawyer")
       .leftJoinAndSelect("case.publisher", "publisher")
@@ -199,12 +201,9 @@ export default class OrderService {
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
       .leftJoinAndSelect("case.publisher", "publisher")
-      .innerJoinAndSelect(
-        "case.bidders",
-        "bidder",
-        "bidder.lawyer_id = :user_id",
-        { uid: lawyer_id }
-      )
+      .innerJoinAndSelect("case.bidders", "bidder", "bidder.lawyer_id = :uid", {
+        uid: lawyer_id
+      })
       .getMany();
 
     return {
@@ -257,16 +256,16 @@ export default class OrderService {
    * @apiGroup Case
    *
    * @apiParam {Number} case_id  案件id.
-   * @apiParam {Number} server_id  选中服务律师的uid.
+   * @apiParam {Number} select_lawyer_id  选中服务律师的uid.
    *
    * @apiSuccess {String} code S_Ok
    */
   static async selectBidder(context?: Context) {
     const Repo = this.getRepository<Case>(Case);
 
-    const { case_id, server_id } = context.request.body;
+    const { case_id, select_lawyer_id } = context.request.body;
 
-    if (!case_id || !server_id) {
+    if (!case_id || !select_lawyer_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
@@ -275,8 +274,8 @@ export default class OrderService {
     }
 
     let targetCase = Repo.create({
-      server_id,
-      status: ORDER_STATUS.pending
+      select_lawyer_id,
+      status: CaseStatus.pending
     });
     const res = await Repo.update(case_id, targetCase);
     return {
