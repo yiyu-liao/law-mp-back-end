@@ -2,7 +2,7 @@ import { Context } from "koa";
 import { getManager, Repository, getRepository } from "typeorm";
 import User from "@src/entity/user";
 import Lawyer from "@src/entity/lawyer";
-import jwt from "jsonwebtoken";
+import jwt = require("jsonwebtoken");
 import fs = require("fs");
 import path = require("path");
 const publicKey = fs.readFileSync(path.join(__dirname, "../../publicKey.pub"));
