@@ -32,7 +32,7 @@ export default class Case {
   @JoinColumn({ name: "publisher_id" })
   publisher: User;
 
-  @Column()
+  @Column({ default: null })
   select_lawyer_id: string;
 
   @Column() // 案件类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
