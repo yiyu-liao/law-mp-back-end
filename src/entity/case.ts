@@ -42,9 +42,6 @@ export default class Case {
   @Column({ type: "simple-json", default: null })
   extra_info: any;
 
-  @Column({ default: null })
-  server_id: string;
-
   @Column({ default: CaseStatus.bidding })
   status: number;
 

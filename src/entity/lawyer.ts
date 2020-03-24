@@ -22,6 +22,9 @@ export default class Lawyer {
   experience_year: number;
 
   @Column({ default: null })
+  balance: number;
+
+  @Column({ default: null })
   id_photo: string;
 
   @Column({ default: null })

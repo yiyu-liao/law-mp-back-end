@@ -4,7 +4,8 @@ export enum PayOrderStatus {
   prePay,
   success,
   cancel,
-  appeal
+  appeal,
+  complete
 }
 
 export enum CaseStatus {
@@ -14,4 +15,9 @@ export enum CaseStatus {
   complete,
   appeal,
   cancel
+}
+
+export enum AppealStatus {
+  pending,
+  success
 }

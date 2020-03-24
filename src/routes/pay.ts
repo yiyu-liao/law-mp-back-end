@@ -7,9 +7,24 @@ const pay = [
     action: payServer.getPayParams
   },
   {
-    path: "/pay/callback",
+    path: "/pay/noticeCallback",
     method: "post",
-    action: ""
+    action: payServer.payNoticeCallback
+  },
+  {
+    path: "/pay/refundNoticeCallback",
+    method: "post",
+    action: payServer.refundNoticeCallback
+  },
+  {
+    path: "/pay/applyRefund",
+    method: "post",
+    action: payServer.applyRefund
+  },
+  {
+    path: "/pay/applyWithdrawal",
+    method: "post",
+    action: payServer.applyWithdrawal
   }
 ];
 

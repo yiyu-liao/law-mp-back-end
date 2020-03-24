@@ -15,6 +15,8 @@ import ErrorHander from "@src/middleware/ErrorHander";
 
 const publicKey = fs.readFileSync(path.join(__dirname, "../publicKey.pub"));
 
+import { WxPayApi } from "@src/service/pay";
+
 createConnection()
   .then(async connection => {
     // create koa app
@@ -25,7 +27,23 @@ createConnection()
     const port = process.env.PORT || 9527;
 
     // register all application routes
-    AppRoutes.forEach(route => router[route.method](route.path, route.action));
+    AppRoutes.forEach(route => {
+      if (route.path === "/pay/refundNoticeCallback") {
+        router[route.method](
+          route.path,
+          WxPayApi.middleware("pay"),
+          route.action
+        );
+      } else if (route.path === "/pay/refundNoticeCallback") {
+        router[route.method](
+          route.path,
+          WxPayApi.middleware("refund"),
+          route.action
+        );
+      } else {
+        router[route.method](route.path, route.action);
+      }
+    });
 
     app.use(ErrorHander);
     // app.use(jwt({ secret: publicKey }).unless({ path: [/^\/api\/user\/authSession/] }))

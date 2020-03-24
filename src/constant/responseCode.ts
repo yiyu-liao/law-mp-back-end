@@ -17,5 +17,10 @@ export const ResponseCode = {
   PAY_SIGN_ERROR: {
     code: "PAY_SIGN_ERROR",
     msg: "调起微信支付签名错误"
+  },
+
+  BALANCE_INSUFFICIENT: {
+    code: "BALANCE_INSUFFICIENT",
+    msg: "提现余额不足"
   }
 };

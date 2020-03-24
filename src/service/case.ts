@@ -124,8 +124,8 @@ export default class OrderService {
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
       .andWhere("case.status = :status", { status: CaseStatus.bidding })
-      .leftJoinAndSelect("case.bidders", "bidders")
-      .leftJoinAndSelect("bidders.lawyer", "lawyer")
+      .leftJoinAndSelect("case.bidders", "bidder")
+      .leftJoinAndSelect("bidder.lawyer", "lawyer")
       .leftJoinAndSelect("case.publisher", "publisher")
       .getMany();
 
@@ -149,7 +149,7 @@ export default class OrderService {
   static async getCustomerList(context?: Context) {
     const { customer_id, type } = context.request.body;
 
-    if (!type) {
+    if (!type || !customer_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
@@ -166,7 +166,7 @@ export default class OrderService {
         "publisher.uid = :uid",
         { uid: customer_id }
       )
-      .leftJoinAndSelect("case.bidders", "bidders")
+      .leftJoinAndSelect("case.bidders", "bidder")
       .getMany();
 
     return {
@@ -189,7 +189,7 @@ export default class OrderService {
   static async getLawyerList(context?: Context) {
     const { lawyer_id, type } = context.request.body;
 
-    if (!type) {
+    if (!type || !lawyer_id) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
@@ -200,10 +200,11 @@ export default class OrderService {
     let result = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
-      .leftJoinAndSelect("case.publisher", "publisher")
       .innerJoinAndSelect("case.bidders", "bidder", "bidder.lawyer_id = :uid", {
         uid: lawyer_id
       })
+      .leftJoinAndSelect("bidder.lawyer", "lawyer")
+      .leftJoinAndSelect("case.publisher", "publisher")
       .getMany();
 
     return {
@@ -236,11 +237,10 @@ export default class OrderService {
     let result = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.id = :case_id", { case_id })
-      .leftJoinAndSelect("case.bidders", "bidders")
-      .leftJoinAndSelect("bidders.lawyer", "lawyer")
-      .leftJoinAndSelect("lawyer.extra_profile", "bidder_extra_profile")
       .leftJoinAndSelect("case.publisher", "publisher")
-      .leftJoinAndSelect("publisher.extra_profile", "publisher_extra_profile")
+      .leftJoinAndSelect("case.bidders", "bidder")
+      .leftJoinAndSelect("bidder.lawyer", "lawyer")
+      .leftJoinAndSelect("lawyer.extra_profile", "bidder_profile")
       .getOne();
 
     return {
@@ -291,11 +291,11 @@ export default class OrderService {
    * @apiGroup Case
    *
    * @apiParam {Number} case_id  案件id.
-   * @apiParam {Number} status  状态值. 抢单中 => 1, 待处理 => 2, 处理中 = 3, 完成 => 4, 申诉 => 5, 取消 => 6
+   * @apiParam {Number} status  状态值. 抢单中 => 0, 待处理 => 1, 处理中 = 2, 完成 => 3, 申诉 => 4, 取消 => 5
    *
    * @apiSuccess {String} code S_Ok
    */
-  static async changeOrderStatus(ctx?: Context) {
+  static async changeCaseStatus(ctx?: Context) {
     const Repo = this.getRepository<Case>(Case);
 
     const { case_id, status } = ctx.request.body;
@@ -310,13 +310,12 @@ export default class OrderService {
       };
       throw new HttpException(error);
     }
-
-    let targetCase = new Case();
-    targetCase.status = status;
-    const res = await Repo.update(case_id, targetCase);
+    await Repo.update(case_id, {
+      status
+    });
     return {
       code: ResponseCode.SUCCESS.code,
-      data: res,
+      data: null,
       message: ResponseCode.SUCCESS.msg
     };
   }

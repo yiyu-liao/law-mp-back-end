@@ -35,6 +35,11 @@ const Case = [
     path: "/case/selectBidder",
     method: "post",
     action: CaseServer.selectBidder
+  },
+  {
+    path: "/case/updateStatus",
+    method: "post",
+    action: CaseServer.changeCaseStatus
   }
 ];
 

@@ -13,9 +13,6 @@ export default class OrderController {
   static async getCaseDetail(ctx) {
     ctx.body = await CaseService.getCaseDetail(ctx);
   }
-  static async changeOrderStatus(ctx) {
-    ctx.body = await CaseService.changeOrderStatus(ctx);
-  }
   static async getCaseList(ctx) {
     ctx.body = await CaseService.getCaseList(ctx);
   }
@@ -24,5 +21,8 @@ export default class OrderController {
   }
   static async getLawyerList(ctx) {
     ctx.body = await CaseService.getLawyerList(ctx);
+  }
+  static async changeCaseStatus(ctx) {
+    ctx.body = await CaseService.changeCaseStatus(ctx);
   }
 }
