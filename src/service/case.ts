@@ -160,13 +160,13 @@ export default class OrderService {
     let result = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
-      .leftJoinAndSelect("case.bidders", "bidders")
-      .leftJoinAndSelect(
+      .innerJoinAndSelect(
         "case.publisher",
         "publisher",
         "publisher.uid = :uid",
         { uid: customer_id }
       )
+      .leftJoinAndSelect("case.bidders", "bidders")
       .getMany();
 
     return {
