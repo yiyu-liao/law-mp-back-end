@@ -42,7 +42,7 @@ export default class PayService {
    * @apiParam {Number} total_fee 支付金额，单位为分，如需支付0.1元，total_fee为100
    * @apiParam {String} openid 当前支付用户openid
    * @apiParam {String} select_lawyer_id 选中律师openid
-   * @apiParam {Number} 当前支付订单case_id
+   * @apiParam {Number} case_id 当前支付订单case_id
    *
    * @apiSuccess {String} code S_Ok
    */
