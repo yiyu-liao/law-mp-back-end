@@ -1,7 +1,7 @@
 export { ResponseCode } from "./responseCode";
 
 export enum PayOrderStatus {
-  prePay,
+  prepay,
   success,
   cancel,
   appeal,

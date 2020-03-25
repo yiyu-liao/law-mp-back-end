@@ -9,12 +9,12 @@ import {
   OneToOne
 } from "typeorm";
 import Case from "./case";
-import Pay from "./pay-order";
+import Pay from "./case-order";
 import { AppealStatus } from "@src/constant";
 import User from "./user";
 
 @Entity()
-export default class Appeal {
+export default class CaseAppeal {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -23,7 +23,7 @@ export default class Appeal {
   out_refund_no: string;
 
   @Column()
-  appealer_reason: string;
+  appeal_reason: string;
 
   @OneToOne(type => Case)
   @JoinColumn({ name: "case_id" })

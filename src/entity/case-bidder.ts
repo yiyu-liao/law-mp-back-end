@@ -11,7 +11,7 @@ import Order from "./case";
 import User from "./user";
 
 @Entity()
-export default class caseBidder {
+export default class CaseBidder {
   @PrimaryGeneratedColumn()
   id: number;
 

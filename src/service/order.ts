@@ -10,12 +10,12 @@ import { generateTradeNumber } from "@src/shared";
 
 import { getManager, Repository, getRepository } from "typeorm";
 
-import PayOrder from "@src/entity/pay-order";
+import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
 
 import * as Config from "../../config.js";
 import User from "@src/entity/user.ts";
-import Appeal from "@src/entity/appeal.ts";
+import Appeal from "@src/entity/case-appeal";
 import HttpException from "@src/shared/http-exception";
 import Lawyer from "@src/entity/lawyer.ts";
 
@@ -34,7 +34,7 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /pay/getPayParams 获取支付参数
+   * @api {post} /order/getPayParams 获取支付参数
    * @apiName getPayParams
    * @apiGroup WxPay
    *
@@ -92,8 +92,8 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /pay/payNoticeCallback 支付成功回调
-   * @apiName payNoticeCallback
+   * @api {post} /order/payCallback 支付成功回调
+   * @apiName payCallback
    * @apiGroup WxPay
    * @apiSuccess {String} code S_Ok
    */
@@ -135,7 +135,7 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /pay/applyRefund 用户申诉
+   * @api {post} /order/applyRefund 用户申诉
    * @apiName applyRefund
    * @apiGroup WxPay
    *
@@ -146,7 +146,7 @@ export default class PayService {
    * @apiSuccess {String} code S_Ok
    */
   static async applyRefund(ctx: Context) {
-    const { out_trade_no, appealer_id, appealer_reason } = ctx.request.body;
+    const { out_trade_no, appealer_id, appeal_reason } = ctx.request.body;
 
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
     const CaseOrderRepo = this.getRepository<Case>(Case);
@@ -167,7 +167,7 @@ export default class PayService {
     let appealer = await UserRepo.findOne(appealer_id);
 
     let appealOrder = AppealRepo.create({
-      appealer_reason,
+      appeal_reason,
       pay_order: payOrder,
       appealer
     });
@@ -182,8 +182,8 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /admin/refund 管理员确认退款
-   * @apiName confirmRefund
+   * @api {post} /api/refund 管理员确认退款
+   * @apiName refund
    * @apiGroup Admin
    *
    * @apiParam {String} out_trade_no 支付订单out_trade_no
@@ -210,8 +210,8 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /admin/refundNoticeCallback 退款通知回调
-   * @apiName confirmRefundNotice
+   * @api {post} /api/refundCallback 退款通知回调
+   * @apiName refundCallback
    * @apiGroup Admin
    *
    * @apiSuccess {String} code S_Ok
@@ -249,7 +249,7 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /pay/withdrawal 律师申请提现
+   * @api {post} /order/withdrawal 律师申请提现
    * @apiName withdrawal
    * @apiGroup WxPay
    *
@@ -297,7 +297,7 @@ export default class PayService {
   }
 
   /**
-   * @api {post} /pay/confirmOrder 用户确认订单，更新律师账户余额
+   * @api {post} /order/confirmOrder 用户确认订单
    * @apiName confirmOrder
    * @apiGroup WxPay
    *
@@ -333,6 +333,84 @@ export default class PayService {
       code: Res.SUCCESS.code,
       data: null,
       message: Res.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /order/query 查询支付订单状态
+   * @apiName query
+   * @apiGroup WxPay
+   *
+   * @apiParam {String} out_trade_no 支付订单out_trade_no
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async orderQuery(ctx: Context) {
+    const { out_trade_no } = ctx.request.body;
+
+    let result = await WxPayApi.orderQuery({
+      out_trade_no
+    });
+
+    return {
+      code: Res.SUCCESS.code,
+      data: result,
+      message: Res.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /order/customerOrderList 客户支付订单列表
+   * @apiName customerOrderList
+   * @apiGroup WxPay
+   *
+   * @apiParam {String} uid 客户uid
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getCustomerOrderList(ctx: Context) {
+    const { uid } = ctx.request.body;
+
+    let result = await getRepository(PayOrder)
+      .createQueryBuilder("order")
+      .innerJoinAndSelect("order.case", "case", "case.publisher_id := uid", {
+        uid
+      })
+      .getMany();
+
+    return {
+      code: Res.SUCCESS.code,
+      data: result,
+      msg: Res.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /order/lawyerOrderList 律师支付订单列表
+   * @apiName lawyerOrderList
+   * @apiGroup WxPay
+   *
+   * @apiParam {String} uid 律师uid
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getLawyerOrderList(ctx: Context) {
+    const { uid } = ctx.request.body;
+
+    let result = await getRepository(PayOrder)
+      .createQueryBuilder("order")
+      .innerJoinAndSelect(
+        "order.case",
+        "case",
+        "case.select_lawyer_id := uid",
+        { uid }
+      )
+      .getMany();
+
+    return {
+      code: Res.SUCCESS.code,
+      data: result,
+      msg: Res.SUCCESS.msg
     };
   }
 }

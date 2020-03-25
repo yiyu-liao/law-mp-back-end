@@ -15,7 +15,7 @@ import ErrorHander from "@src/middleware/ErrorHander";
 
 const publicKey = fs.readFileSync(path.join(__dirname, "../publicKey.pub"));
 
-import { WxPayApi } from "@src/service/pay";
+import { WxPayApi } from "@src/service/order";
 
 createConnection()
   .then(async connection => {

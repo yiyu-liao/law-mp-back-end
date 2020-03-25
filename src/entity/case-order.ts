@@ -27,6 +27,6 @@ export default class CasePayOrder {
   @Column()
   total_fee: number;
 
-  @Column({ default: PayOrderStatus.prePay })
+  @Column({ default: PayOrderStatus.prepay })
   pay_status: number;
 }
