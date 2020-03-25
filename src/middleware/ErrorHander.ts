@@ -9,6 +9,9 @@ const ErrorHandler = async (ctx: koa.Context, next: Function) => {
       console.log(`${ctx.method} ${ctx.url} - ${ms}ms`);
     }
   } catch (error) {
+    if (error.status === 401) {
+      error.code = "TOKEN_INVAILD";
+    }
     ctx.app.emit("error", error);
     return (ctx.body = {
       ...error

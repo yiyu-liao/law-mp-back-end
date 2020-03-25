@@ -42,7 +42,7 @@ export default class UserService {
         nick_name: nickName
       },
       publicKey,
-      { expiresIn: "7d" }
+      { expiresIn: "3d" }
     );
 
     if (!errcode) {

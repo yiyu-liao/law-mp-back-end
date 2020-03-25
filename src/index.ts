@@ -46,7 +46,9 @@ createConnection()
     });
 
     app.use(ErrorHander);
-    // app.use(jwt({ secret: publicKey }).unless({ path: [/^\/api\/user\/authSession/] }))
+    app.use(
+      jwt({ secret: publicKey }).unless({ path: [/^\/api\/user\/authSession/] })
+    );
     app.use(
       bodyParser({
         enableTypes: ["json", "form", "text"],

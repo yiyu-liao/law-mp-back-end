@@ -31,7 +31,7 @@ export default class CaseAppeal {
 
   @OneToOne(type => Pay)
   @JoinColumn({ name: "pay_id" })
-  pay_order: Pay;
+  payOrder: Pay;
 
   @OneToOne(type => User)
   @JoinColumn({ name: "appealer_id" })
@@ -41,5 +41,5 @@ export default class CaseAppeal {
   status: number;
 
   @CreateDateColumn({ type: "timestamp" })
-  create_time: string;
+  createTime: string;
 }

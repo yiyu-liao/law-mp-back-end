@@ -12,11 +12,6 @@ const pay = [
     action: OrderService.payNoticeCallback
   },
   {
-    path: "/order/refundCallback",
-    method: "post",
-    action: OrderService.refundNoticeCallback
-  },
-  {
     path: "/order/applyRefund",
     method: "post",
     action: OrderService.applyRefund

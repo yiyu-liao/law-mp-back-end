@@ -22,5 +22,15 @@ export const ResponseCode = {
   BALANCE_INSUFFICIENT: {
     code: "BALANCE_INSUFFICIENT",
     msg: "提现余额不足"
+  },
+
+  ADMIN_USER_ALREADY_EXIT: {
+    code: "USER_ALREADY_EXIT",
+    msg: "该账号已存在"
+  },
+
+  ADMIN_USRE_NOT_EXIT: {
+    code: "ADMIN_USRE_NOT_EXIT",
+    msg: "该账号不存在"
   }
 };

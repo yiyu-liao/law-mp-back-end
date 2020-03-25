@@ -168,7 +168,7 @@ export default class PayService {
 
     let appealOrder = AppealRepo.create({
       appeal_reason,
-      pay_order: payOrder,
+      payOrder: payOrder,
       appealer
     });
 
@@ -179,73 +179,6 @@ export default class PayService {
       data: {},
       message: Res.SUCCESS.msg
     };
-  }
-
-  /**
-   * @api {post} /api/refund 管理员确认退款
-   * @apiName refund
-   * @apiGroup Admin
-   *
-   * @apiParam {String} out_trade_no 支付订单out_trade_no
-   * @apiParam {Number} total_fee
-   * @apiParam {Number} refund_fee 非必填
-   *
-   * @apiSuccess {String} code S_Ok
-   */
-  static async refund(ctx: Context) {
-    const { out_trade_no, total_fee, refund_fee } = ctx.request.body;
-
-    let result = await WxPayApi.refund({
-      out_trade_no: out_trade_no,
-      out_refund_no: generateTradeNumber(),
-      total_fee,
-      refund_fee: refund_fee || total_fee
-    });
-
-    return {
-      code: Res.SUCCESS.code,
-      data: result,
-      message: Res.SUCCESS.msg
-    };
-  }
-
-  /**
-   * @api {post} /api/refundCallback 退款通知回调
-   * @apiName refundCallback
-   * @apiGroup Admin
-   *
-   * @apiSuccess {String} code S_Ok
-   */
-  static async refundCallback(ctx) {
-    const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
-    const CaseOrderRepo = this.getRepository<Case>(Case);
-    const AppealRepo = this.getRepository<Appeal>(Appeal);
-
-    let info = ctx.request.weixin;
-
-    console.log("refund callback info", info);
-
-    let appeal: Appeal = await AppealRepo.findOne({
-      where: { out_refund_no: info.out_refund_no },
-      relations: ["case", "pay"]
-    });
-
-    if (!appeal) {
-      return ctx.reply("申请退款失败，无退款记录");
-    }
-
-    await AppealRepo.update(appeal.id, {
-      status: AppealStatus.success
-    });
-
-    await PayOrderRepo.update(appeal.pay_order.id, {
-      pay_status: PayOrderStatus.cancel
-    });
-    await CaseOrderRepo.update(appeal.case.id, {
-      status: CaseStatus.cancel
-    });
-
-    return ctx.reply();
   }
 
   /**

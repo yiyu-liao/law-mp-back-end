@@ -1,4 +1,5 @@
 import * as _ from "lodash";
+import bcrypt = require("bcrypt");
 
 /**
  * 生成订单的编号order_sn
@@ -15,4 +16,36 @@ export function generateTradeNumber() {
     _.padStart(date.getSeconds().toString(), 2, "0") +
     _.random(100000, 999999)
   );
+}
+
+export function createHttpResponse(code: string, msg: string, data?: any) {
+  return {
+    code,
+    data,
+    messgae: msg
+  };
+}
+
+export function doCrypto(
+  password: string,
+  saltRounds: number = 10
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    bcrypt.genSalt(saltRounds, (error, salt) => {
+      if (error) reject("");
+      bcrypt.hash(password, salt, (error, hash) => {
+        if (error) reject("");
+        resolve(hash);
+      });
+    });
+  });
+}
+
+export function comparePasword(fromPost: string, fromDatabase: string) {
+  return new Promise((resolve, reject) => {
+    bcrypt.compare(fromPost, fromDatabase, (error, res) => {
+      if (error) reject("");
+      resolve(res);
+    });
+  });
 }
