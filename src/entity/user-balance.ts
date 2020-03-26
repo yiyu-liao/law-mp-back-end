@@ -5,10 +5,9 @@ import {
   OneToOne,
   JoinColumn
 } from "typeorm";
-import User from "./user";
 
 @Entity()
-export default class UserLawyerMeta {
+export default class UserBalance {
   @PrimaryGeneratedColumn()
   id: number;
 
