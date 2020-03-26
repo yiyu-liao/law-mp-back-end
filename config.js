@@ -1,8 +1,8 @@
 module.exports = {
-  appid: "wxf25ec7849576cefb",
-  appSecret: "5e539adcdef2698b44582376b23a449c",
-  mchid: "微信商户号",
-  partnerKey: "微信支付安全密钥",
+  appid: "wx80f925d4c29306ef",
+  appSecret: "84135d26a05f2c7ce3bcfef96a664d25",
+  mchid: "1579333881",
+  partnerKey: "Flt88inKWEYUofkFDxEJv8d0GwvexFKj",
   // pfx: require('fs').readFileSync('xxx'),
   notify_url: "支付回调网址",
   spbill_create_ip: "IP地址",

@@ -9,7 +9,7 @@ import {
   PrimaryColumn
 } from "typeorm";
 
-import Lawyer from "./lawyer";
+import Lawyer from "./user-lawyer-meta";
 import LegalAdvice from "./advice";
 import Order from "./case";
 import AdviceReply from "./advice-reply";
@@ -17,9 +17,12 @@ import Bidders from "./case-bidder";
 
 @Entity()
 export default class User {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
+  @Column()
   @Index()
-  uid: string;
+  openid: string;
 
   @Column({ default: null })
   avatar_url: string;

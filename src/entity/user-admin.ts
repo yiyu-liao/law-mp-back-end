@@ -8,8 +8,8 @@ import {
 
 @Entity()
 export default class UserAdmin {
-  @PrimaryGeneratedColumn()
-  uid: number;
+  @PrimaryGeneratedColumn("uuid")
+  id: number;
 
   @Column()
   @Index()
@@ -21,6 +21,6 @@ export default class UserAdmin {
   @Column({ type: "timestamp", default: null, name: "last_login_time" })
   lastLoginTime: string;
 
-  @CreateDateColumn({ type: "timestamp" })
+  @CreateDateColumn({ type: "timestamp", name: "create_time" })
   createTime: string;
 }

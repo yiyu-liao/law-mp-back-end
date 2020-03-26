@@ -109,8 +109,7 @@ export default class AdminService {
    * @api {post} /api/admin/deleteUser 删除管理员
    * @apiGroup Admin
    *
-   * @apiParam {String} username 用户名
-   * @apiParam {Number} pasword 密码
+   * @apiParam {String} user_id 用户id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -119,7 +118,7 @@ export default class AdminService {
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
     let deleteUser = UserRepo.create({
-      uid: user_id
+      id: user_id
     });
 
     await UserRepo.remove(deleteUser);

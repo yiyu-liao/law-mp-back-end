@@ -13,4 +13,7 @@ export default class UserController {
   static async getUserRelateReply(ctx) {
     ctx.body = await UserService.getUserRelateReply(ctx);
   }
+  static async getUserBalance(ctx) {
+    ctx.body = await UserService.getUserBalance(ctx);
+  }
 }

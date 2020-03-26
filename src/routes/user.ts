@@ -20,6 +20,11 @@ const user = [
     path: "/user/relateReply",
     method: "post",
     action: UserController.getUserRelateReply
+  },
+  {
+    path: "/user/balance",
+    method: "post",
+    action: UserController.getUserBalance
   }
 ];
 

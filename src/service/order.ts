@@ -16,8 +16,8 @@ import Case from "@src/entity/case";
 import * as Config from "../../config.js";
 import User from "@src/entity/user.ts";
 import Appeal from "@src/entity/case-appeal";
+import Balance from "@src/entity/user-balance";
 import HttpException from "@src/shared/http-exception";
-import Lawyer from "@src/entity/lawyer.ts";
 
 export const WxPayApi = new tenPay({
   appid: Config.appid,
@@ -62,7 +62,7 @@ export default class PayService {
       openid
     });
 
-    if (result.result_code === "SUCCESS") {
+    if (result.return_code === "SUCCESS") {
       const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
       const CaseOrderRepo = this.getRepository<Case>(Case);
 
@@ -71,6 +71,7 @@ export default class PayService {
       targetCase.select_lawyer_id = select_lawyer_id;
       await CaseOrderRepo.save(targetCase);
 
+      // TODO: review 新建PayOrder是否有意义
       const pay = PayOrderRepo.create({
         out_trade_no,
         case: targetCase,
@@ -140,7 +141,7 @@ export default class PayService {
    * @apiGroup WxPay
    *
    * @apiParam {String} out_trade_no 支付订单out_trade_no
-   * @apiParam {String} appealer_id 申诉人uid
+   * @apiParam {String} appealer_id 申诉人id
    * @apiParam {String} appealer_reason 申诉理由
    *
    * @apiSuccess {String} code S_Ok
@@ -187,7 +188,7 @@ export default class PayService {
    * @apiGroup WxPay
    *
    * @apiParam {Number} apply_fee 申请提现金额
-   * @apiParam {String} lawyer_id 申请人uid
+   * @apiParam {String} lawyer_id 申请人id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -195,13 +196,18 @@ export default class PayService {
     const { apply_fee, lawyer_id } = ctx.request.body;
 
     const UserrRepo = this.getRepository<User>(User);
-    const ExtraProfileRepo = this.getRepository<Lawyer>(Lawyer);
+    const BalanceRepo = this.getRepository<Balance>(Balance);
 
     let lawyer = await UserrRepo.findOne(lawyer_id, {
       relations: ["extra_profile"]
     });
 
-    if (Number(lawyer.extra_profile.balance) * 0.9 < Number(apply_fee)) {
+    let lawyerBalance = await BalanceRepo.findOne({
+      where: { ownerId: lawyer_id }
+    });
+    let { id: balanceId, totalBalance } = lawyerBalance;
+
+    if (Number(totalBalance) < Number(apply_fee)) {
       throw new HttpException({
         code: Res.BALANCE_INSUFFICIENT.code,
         message: Res.BALANCE_INSUFFICIENT.msg
@@ -210,16 +216,14 @@ export default class PayService {
 
     let result = await WxPayApi.transfers({
       partner_trade_no: generateTradeNumber(),
-      openid: lawyer.uid,
+      openid: lawyer.openid,
       re_user_name: lawyer.real_name,
       amount: apply_fee,
       desc: "提现申请"
     });
 
-    let { id, balance: preBalance } = lawyer.extra_profile;
-
-    await ExtraProfileRepo.update(id, {
-      balance: preBalance - apply_fee
+    await BalanceRepo.update(balanceId, {
+      totalBalance: Number(totalBalance) - Number(apply_fee)
     });
 
     return {
@@ -241,7 +245,7 @@ export default class PayService {
   static async confirmOrder(ctx: Context) {
     const { out_trade_no } = ctx.request.body;
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
-    const UserRepo = this.getRepository<User>(User);
+    const BalanceRepo = this.getRepository<Balance>(Balance);
 
     let payOrder: PayOrder = await PayOrderRepo.findOne({
       where: { out_trade_no },
@@ -250,13 +254,15 @@ export default class PayService {
     const targetLawyerId = payOrder.case.select_lawyer_id;
     const orderIncome = payOrder.total_fee;
 
-    let user: User = await UserRepo.findOne(targetLawyerId, {
-      relations: ["extra_profile"]
+    let lawyerBalance = await BalanceRepo.findOne({
+      where: { ownerId: targetLawyerId }
     });
 
-    user.extra_profile.balance += orderIncome;
+    let { id: balanceId, totalBalance } = lawyerBalance;
 
-    await UserRepo.save(user);
+    await BalanceRepo.update(balanceId, {
+      totalBalance: Number(totalBalance) + Number(orderIncome)
+    });
 
     await PayOrderRepo.update(payOrder.id, {
       pay_status: PayOrderStatus.complete
@@ -297,18 +303,23 @@ export default class PayService {
    * @apiName customerOrderList
    * @apiGroup WxPay
    *
-   * @apiParam {String} uid 客户uid
+   * @apiParam {String} customer_id 客户id
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getCustomerOrderList(ctx: Context) {
-    const { uid } = ctx.request.body;
+    const { customer_id } = ctx.request.body;
 
     let result = await getRepository(PayOrder)
       .createQueryBuilder("order")
-      .innerJoinAndSelect("order.case", "case", "case.publisher_id := uid", {
-        uid
-      })
+      .innerJoinAndSelect(
+        "order.case",
+        "case",
+        "case.publisher_id := customer_id",
+        {
+          customer_id
+        }
+      )
       .getMany();
 
     return {
@@ -323,20 +334,20 @@ export default class PayService {
    * @apiName lawyerOrderList
    * @apiGroup WxPay
    *
-   * @apiParam {String} uid 律师uid
+   * @apiParam {String} lawyer_id 律师id
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getLawyerOrderList(ctx: Context) {
-    const { uid } = ctx.request.body;
+    const { lawyer_id } = ctx.request.body;
 
     let result = await getRepository(PayOrder)
       .createQueryBuilder("order")
       .innerJoinAndSelect(
         "order.case",
         "case",
-        "case.select_lawyer_id := uid",
-        { uid }
+        "case.select_lawyer_id := lawyer_id",
+        { lawyer_id }
       )
       .getMany();
 

@@ -1,7 +1,8 @@
 import { Context } from "koa";
 import { getManager, Repository, getRepository } from "typeorm";
 import User from "@src/entity/user";
-import Lawyer from "@src/entity/lawyer";
+import Lawyer from "@src/entity/user-lawyer-meta";
+import Balance from "@src/entity/user-balance";
 import jwt = require("jsonwebtoken");
 import fs = require("fs");
 import path = require("path");
@@ -47,18 +48,22 @@ export default class UserService {
 
     if (!errcode) {
       const userRepo = this.getRepository<User>(User);
-      const user = await userRepo.findOne(openid, {
-        relations: ["extra_profile"]
-      });
+      const balanceRepo = this.getRepository<Balance>(Balance);
+
+      const user = await userRepo.findOne({ where: { openid } });
       if (!user) {
-        let newUser = await userRepo.save(
-          userRepo.create({
-            uid: openid,
-            nick_name: nickName,
-            avatar_url: avatarUrl,
-            role: 0
-          })
-        );
+        let profile = userRepo.create({
+          openid,
+          nick_name: nickName,
+          avatar_url: avatarUrl,
+          role: 0
+        });
+        let newUser = await userRepo.save(profile);
+
+        let balance = balanceRepo.create({
+          ownerId: newUser.id
+        });
+        await balanceRepo.save(balance);
         return {
           code: ResponseCode.SUCCESS.code,
           data: newUser ? newUser : null,
@@ -90,7 +95,6 @@ export default class UserService {
    * @apiParam {String} nick_name  昵称(base_info)
    * @apiParam {String} real_name  真实姓名(base_info)
    * @apiParam {Number} verify_status  验证状态(base_info) // 1 => 未认证， 2 => 申请认证， 3 => 已认证
-   * @apiParam {String} balance  余额(extra_profile)
    * @apiParam {String} office  所在律所(extra_profile)
    * @apiParam {String} location  所在地区(extra_profile)
    * @apiParam {String} experience_year  经验年限(extra_profile)
@@ -150,7 +154,7 @@ export default class UserService {
         relations: ["extra_profile"]
       });
       let oldProfile = tempUser.extra_profile;
-      let updatePayload: Partial<User> = JSON.parse(extra_profile);
+      let updatePayload = JSON.parse(extra_profile);
 
       for (const key in updatePayload) {
         if (!updatePayload[key]) {
@@ -236,12 +240,43 @@ export default class UserService {
 
     let result = await getRepository(User)
       .createQueryBuilder("user")
-      .where("user.uid = :user_id", { user_id })
+      .where("user.id = :user_id", { user_id })
       .leftJoinAndSelect("user.create_replies", "create_replies")
       .leftJoinAndSelect("user.receive_replies", "receive_replies")
       .leftJoinAndSelect("create_replies.advice", "create_advice")
       .leftJoinAndSelect("receive_replies.advice", "reply_advice")
       .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /user/balance 获取用户余额
+   * @apiName balance
+   * @apiGroup User
+   *
+   * @apiParam {Number} user_id  用户id
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getUserBalance(context?: Context) {
+    const { user_id } = context.request.body;
+
+    if (!user_id) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    const BalanceRepo = this.getRepository<Balance>(Balance);
+
+    const result = await BalanceRepo.findOne({ where: { ownerId: user_id } });
 
     return {
       code: ResponseCode.SUCCESS.code,

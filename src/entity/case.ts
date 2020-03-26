@@ -38,7 +38,6 @@ export default class Case {
   @Column() // 案件类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
   case_type: number;
 
-  // TO DO: add type
   @Column({ type: "simple-json", default: null })
   extra_info: any;
 

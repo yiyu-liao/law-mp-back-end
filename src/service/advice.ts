@@ -20,7 +20,7 @@ export default class AdviceService {
      * @apiName publishAdvice
      * @apiGroup Advice
      *
-     * @apiParam {Number} advicer_id  发布者uid
+     * @apiParam {Number} advicer_id  发布者id
      * @apiParam {Number} topic  咨询主题。1 => 民事代理, 2 => 商事纠纷, 3 => 刑事辩护, 4 => 行政诉讼
      * @apiParam {String} title  咨询标题
      * @apiParam {content} content  咨询内容
@@ -74,8 +74,8 @@ export default class AdviceService {
    * @apiParam {Number} title  咨询title
    * @apiParam {Number} pid 回复目标评论的id, 若是目标是咨询内容，pid为0
    * @apiParam {String} content  回复内容
-   * @apiParam {String} from_id  回复者uid
-   * @apiParam {String} to_id  被回复者uid
+   * @apiParam {String} from_id  回复者id
+   * @apiParam {String} to_id  被回复者id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -110,7 +110,7 @@ export default class AdviceService {
     let res = await ReplyRepo.save(reply);
 
     const { data } = await WxService.sendMessageToUser({
-      touser: to_id,
+      touser: to.openid,
       replyer: from.real_name,
       content,
       title: title
@@ -188,7 +188,7 @@ export default class AdviceService {
    * @apiName getCustomerAllAdvices
    * @apiGroup Advice
    *
-   * @apiParam {String} customer_id  客户uid
+   * @apiParam {String} customer_id  客户id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -205,9 +205,14 @@ export default class AdviceService {
 
     let result = await getRepository(Advice)
       .createQueryBuilder("Advice")
-      .innerJoinAndSelect("Advice.advicer", "advicer", "advicer.uid = :uid", {
-        uid: customer_id
-      })
+      .innerJoinAndSelect(
+        "Advice.advicer",
+        "advicer",
+        "advicer.id = :customer_id",
+        {
+          customer_id
+        }
+      )
       .leftJoinAndSelect("Advice.replies", "replies")
       .getMany();
 
@@ -223,7 +228,7 @@ export default class AdviceService {
    * @apiName getCustomerAllAdvices
    * @apiGroup Advice
    *
-   * @apiParam {String} lawyer_id  律师uid
+   * @apiParam {String} lawyer_id  律师id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -243,8 +248,8 @@ export default class AdviceService {
       .innerJoinAndSelect(
         "Advice.replies",
         "reply",
-        "reply.from_id = :from_id",
-        { from_id: lawyer_id }
+        "reply.from_id = :lawyer_id",
+        { lawyer_id }
       )
       .getMany();
 

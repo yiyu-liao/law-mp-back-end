@@ -8,7 +8,7 @@ import {
 import User from "./user";
 
 @Entity()
-export default class Lawyer {
+export default class UserLawyerMeta {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -20,9 +20,6 @@ export default class Lawyer {
 
   @Column({ default: null })
   experience_year: number;
-
-  @Column({ default: null })
-  balance: number;
 
   @Column({ default: null })
   id_photo: string;

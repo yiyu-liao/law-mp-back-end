@@ -20,7 +20,7 @@ export default class OrderService {
    * @apiName publish
    * @apiGroup Case
    *
-   * @apiParam {Number} customer_id  客户uid.
+   * @apiParam {Number} customer_id  客户id.
    * @apiParam {Number} case_type  订单类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
    * @apiParam {Object} extra_info 自定义的表单提交数据 { description?: string, response_time?: number, limit_time?: number; ... }
    *
@@ -63,7 +63,7 @@ export default class OrderService {
    * @apiGroup Case
    *
    * @apiParam {Number} case_id  案件id.
-   * @apiParam {Number} lawyer_id  律师uid.
+   * @apiParam {Number} lawyer_id  律师id.
    * @apiParam {Number} price 报价
    *
    * @apiSuccess {String} code S_Ok
@@ -137,12 +137,12 @@ export default class OrderService {
   }
 
   /**
-   * @api {post} /case/customerList 获取需求订单list
+   * @api {post} /case/customerList 获取客户发布的需求订单list
    * @apiName customer case list
    * @apiGroup Case
    *
    * @apiParam {Number} type  1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
-   * @apiParam {Number} customer_id  用户uid
+   * @apiParam {Number} customer_id  用户id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -163,8 +163,8 @@ export default class OrderService {
       .innerJoinAndSelect(
         "case.publisher",
         "publisher",
-        "publisher.uid = :uid",
-        { uid: customer_id }
+        "publisher.id = :customer_id",
+        { customer_id }
       )
       .leftJoinAndSelect("case.bidders", "bidder")
       .getMany();
@@ -177,12 +177,12 @@ export default class OrderService {
   }
 
   /**
-   * @api {post} /case/lawyerList 获取需求订单list
+   * @api {post} /case/lawyerList 获取律师参与的订单list
    * @apiName lawyer case list
    * @apiGroup Case
    *
    * @apiParam {Number} type  1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
-   * @apiParam {String} lawyer_id 律师uid
+   * @apiParam {String} lawyer_id 律师id
    *
    * @apiSuccess {String} code S_Ok
    */
@@ -200,9 +200,14 @@ export default class OrderService {
     let result = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
-      .innerJoinAndSelect("case.bidders", "bidder", "bidder.lawyer_id = :uid", {
-        uid: lawyer_id
-      })
+      .innerJoinAndSelect(
+        "case.bidders",
+        "bidder",
+        "bidder.lawyer_id = :lawyer_id",
+        {
+          lawyer_id
+        }
+      )
       .leftJoinAndSelect("bidder.lawyer", "lawyer")
       .leftJoinAndSelect("case.publisher", "publisher")
       .getMany();
@@ -240,7 +245,7 @@ export default class OrderService {
       .leftJoinAndSelect("case.publisher", "publisher")
       .leftJoinAndSelect("case.bidders", "bidder")
       .leftJoinAndSelect("bidder.lawyer", "lawyer")
-      .leftJoinAndSelect("lawyer.extra_profile", "bidder_profile")
+      .leftJoinAndSelect("lawyer.extra_profile", "bidderMeta")
       .getOne();
 
     return {
@@ -256,7 +261,7 @@ export default class OrderService {
    * @apiGroup Case
    *
    * @apiParam {Number} case_id  案件id.
-   * @apiParam {Number} select_lawyer_id  选中服务律师的uid.
+   * @apiParam {Number} select_lawyer_id  选中服务律师的id.
    *
    * @apiSuccess {String} code S_Ok
    */
