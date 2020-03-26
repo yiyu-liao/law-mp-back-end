@@ -13,7 +13,7 @@ export default class UserLawyerMeta {
   id: number;
 
   @Column({ name: "owner_id" })
-  ownerId: string;
+  ownerId: number;
 
   @Column({ name: "total_balance", default: 0 })
   totalBalance: number;

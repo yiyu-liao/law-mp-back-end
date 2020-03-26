@@ -17,8 +17,8 @@ import Bidders from "./case-bidder";
 
 @Entity()
 export default class User {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   @Index()
