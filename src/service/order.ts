@@ -1,5 +1,5 @@
 import { Context } from "koa";
-import tenPay = require("tenpay");
+import tenPay = require("@src/shared/lib/index");
 import {
   ResponseCode as Res,
   PayOrderStatus,
@@ -13,24 +13,39 @@ import { getManager, Repository, getRepository } from "typeorm";
 import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
 
-import * as Config from "../../config.js";
+import * as Config from "../../config/config.json";
 import User from "@src/entity/user.ts";
 import Appeal from "@src/entity/case-appeal";
 import Balance from "@src/entity/user-balance";
 import HttpException from "@src/shared/http-exception";
 
-export const WxPayApi = new tenPay({
-  appid: Config.appid,
-  mchid: Config.mchid,
-  partnerKey: Config.partnerKey,
-  pfx: "",
-  notify_url: "",
-  refund_url: ""
-});
+import * as fs from "fs";
+import * as path from "path";
 
-export default class PayService {
+import WxService from "./wx";
+
+const pfxPath = path.join(__dirname, "../../pfx/apiclient_cert.p12");
+const pfx = fs.readFileSync(pfxPath);
+
+import * as util from "@src/shared/payUtil";
+
+export default class OrderService {
   static getRepository<T>(target: any): Repository<T> {
     return getManager().getRepository(target);
+  }
+
+  static async initWxPay() {
+    // @ts-ignore
+    const payApi = new tenPay({
+      appid: Config["wx"].appid,
+      mchid: Config["wx"].mchid,
+      partnerKey: Config["wx"].partnerKey,
+      pfx,
+      notify_url: "https://huaronghr.com/api/order/payCallback",
+      refund_url: "https://huaronghr.com/api/order/refundCallback"
+    });
+
+    return payApi;
   }
 
   /**
@@ -54,42 +69,41 @@ export default class PayService {
       case_id,
       select_lawyer_id
     } = ctx.request.body;
+
     const out_trade_no = generateTradeNumber();
-    let result = await WxPayApi.getPayParams({
+
+    const payApi = await this.initWxPay();
+
+    let result = await payApi.getPayParams({
       out_trade_no,
-      body: body,
+      body,
       total_fee,
       openid
     });
 
-    if (result.return_code === "SUCCESS") {
-      const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
-      const CaseOrderRepo = this.getRepository<Case>(Case);
+    const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
+    const CaseOrderRepo = this.getRepository<Case>(Case);
 
-      let targetCase = new Case();
-      targetCase.id = case_id;
-      targetCase.select_lawyer_id = select_lawyer_id;
-      await CaseOrderRepo.save(targetCase);
+    let targetCase = new Case();
+    targetCase.id = case_id;
+    // targetCase.select_lawyer_id = select_lawyer_id;
+    await CaseOrderRepo.update(case_id, {
+      select_lawyer_id
+    });
 
-      // TODO: review 新建PayOrder是否有意义
-      const pay = PayOrderRepo.create({
-        out_trade_no,
-        case: targetCase,
-        total_fee
-      });
-      await PayOrderRepo.save(pay);
+    // TO Review: review 新建PayOrder是否有意义
+    const pay = PayOrderRepo.create({
+      out_trade_no,
+      case: targetCase,
+      total_fee
+    });
+    await PayOrderRepo.save(pay);
 
-      return {
-        code: Res.SUCCESS.code,
-        data: result,
-        msg: Res.SUCCESS.msg
-      };
-    } else {
-      return {
-        code: Res.PAY_SIGN_ERROR.code,
-        msg: Res.PAY_SIGN_ERROR.msg
-      };
-    }
+    return {
+      code: Res.SUCCESS.code,
+      data: result,
+      msg: Res.SUCCESS.msg
+    };
   }
 
   /**
@@ -101,10 +115,11 @@ export default class PayService {
   static async payCallback(ctx) {
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
     const CaseOrderRepo = this.getRepository<Case>(Case);
+    const UserRepo = this.getRepository<User>(User);
 
     let info = ctx.request.weixin;
 
-    console.log("notice pay callback info", info);
+    console.log("callback info", info);
 
     let payOrder: PayOrder = await PayOrderRepo.findOne({
       where: { out_trade_no: info.out_trade_no },
@@ -115,11 +130,13 @@ export default class PayService {
       return ctx.reply("付款失败，无订单记录");
     }
 
-    if (payOrder.total_fee !== info.total_fee) {
+    const { total_fee, pay_status } = payOrder;
+
+    if (Number(total_fee) !== Number(info.total_fee)) {
       return ctx.reply("付款金额有误，请重新支付");
     }
 
-    if (payOrder.pay_status === PayOrderStatus.success) {
+    if (pay_status === PayOrderStatus.success) {
       return ctx.reply();
     }
 
@@ -127,10 +144,91 @@ export default class PayService {
       pay_status: PayOrderStatus.success
     });
     await CaseOrderRepo.update(payOrder.case.id, {
-      status: CaseStatus.pending
+      status: CaseStatus.processing
     });
 
-    // TODO: send message to lawyer client
+    const { select_lawyer_id, case_type } = payOrder.case;
+
+    const caseType =
+      (case_type === 1 && "文书起草") ||
+      (case_type === 2 && "案件委托") ||
+      (case_type === 3 && "法律顾问") ||
+      (case_type === 3 && "案件查询");
+
+    const lawyerInfo = await UserRepo.findOne(select_lawyer_id);
+
+    await WxService.sendCaseStatusUpdate({
+      caseStatus: "客户已完成支付",
+      comment: `[${caseType}]报价抢单成功，请及时处理`,
+      touser: lawyerInfo.openid,
+      page: "/"
+    });
+
+    return ctx.reply();
+  }
+
+  /**
+   * @api {post} /order/refundCallback 退款通知回调
+   * @apiGroup Admin
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async refundCallback(ctx) {
+    const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
+    const CaseOrderRepo = this.getRepository<Case>(Case);
+    const AppealRepo = this.getRepository<Appeal>(Appeal);
+    const UserRepo = this.getRepository<User>(User);
+
+    let info = ctx.request.weixin;
+
+    const xmlData = info.req_info;
+
+    console.log("refund callback info", info);
+
+    let appeal: Appeal = await AppealRepo.findOne({
+      where: { out_refund_no: xmlData.out_refund_no },
+      relations: ["case", "payOrder", "case.publisher"]
+    });
+
+    if (!appeal) {
+      return ctx.reply("申请退款失败，无退款记录");
+    }
+
+    await AppealRepo.update(appeal.id, {
+      status: AppealStatus.agree
+    });
+
+    const { payOrder } = appeal;
+
+    await PayOrderRepo.update(payOrder.id, {
+      pay_status: PayOrderStatus.cancel
+    });
+    await CaseOrderRepo.update(appeal.case.id, {
+      status: CaseStatus.cancel
+    });
+
+    const case_type = appeal.case.case_type;
+    const caseType =
+      (case_type === 1 && "文书起草") ||
+      (case_type === 2 && "案件委托") ||
+      (case_type === 3 && "法律顾问") ||
+      (case_type === 3 && "案件查询");
+
+    await WxService.sendCaseStatusUpdate({
+      caseStatus: "申诉成功",
+      comment: `[${caseType}]申诉成功，所支付费用已退回钱包。`,
+      touser: appeal.case.publisher.openid,
+      page: "/"
+    });
+
+    const relateLawer = await UserRepo.findOne(appeal.case.select_lawyer_id);
+
+    await WxService.sendCaseStatusUpdate({
+      caseStatus: "客户申诉成功",
+      comment: `[${caseType}]客户申诉成功, 订单已取消。`,
+      touser: relateLawer.openid,
+      page: "/"
+    });
 
     return ctx.reply();
   }
@@ -140,40 +238,64 @@ export default class PayService {
    * @apiName applyRefund
    * @apiGroup WxPay
    *
-   * @apiParam {String} out_trade_no 支付订单out_trade_no
+   * @apiParam {String} case_id 案件id
    * @apiParam {String} appealer_id 申诉人id
-   * @apiParam {String} appealer_reason 申诉理由
+   * @apiParam {String} reason 申诉理由
    *
    * @apiSuccess {String} code S_Ok
    */
   static async applyRefund(ctx: Context) {
-    const { out_trade_no, appealer_id, appeal_reason } = ctx.request.body;
+    const { case_id, appealer_id, reason, url_route } = ctx.request.body;
 
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
     const CaseOrderRepo = this.getRepository<Case>(Case);
     const UserRepo = this.getRepository<User>(User);
     const AppealRepo = this.getRepository<Appeal>(Appeal);
 
-    let payOrder: PayOrder = await PayOrderRepo.findOne({
-      where: { out_trade_no },
-      relations: ["case"]
-    });
-    await PayOrderRepo.update(payOrder.id, {
-      pay_status: PayOrderStatus.appeal
-    });
-    await CaseOrderRepo.update(payOrder.case.id, {
+    // let payOrder: PayOrder = await PayOrderRepo.findOne({
+    //   where: { out_trade_no },
+    //   relations: ["case"]
+    // });
+    // await PayOrderRepo.update(payOrder.id, {
+    //   pay_status: PayOrderStatus.appeal
+    // });
+
+    let payOrder = await getRepository(PayOrder)
+      .createQueryBuilder("order")
+      .where("order.case_id = :case_id", { case_id })
+      .getOne();
+
+    await CaseOrderRepo.update(case_id, {
       status: CaseStatus.appeal
     });
 
+    let refundCase = await CaseOrderRepo.findOne(case_id);
     let appealer = await UserRepo.findOne(appealer_id);
 
     let appealOrder = AppealRepo.create({
-      appeal_reason,
-      payOrder: payOrder,
+      out_refund_no: generateTradeNumber(),
+      reason,
+      payOrder,
+      case: refundCase,
       appealer
     });
 
     await AppealRepo.save(appealOrder);
+
+    const { select_lawyer_id, case_type } = refundCase;
+
+    const lawyerInfo = await UserRepo.findOne(select_lawyer_id);
+    const caseType =
+      (case_type === 1 && "文书起草") ||
+      (case_type === 2 && "案件委托") ||
+      (case_type === 3 && "法律顾问") ||
+      (case_type === 3 && "案件查询");
+    await WxService.sendCaseStatusUpdate({
+      caseStatus: "客户发起申诉，等待后台管理员审核情况",
+      comment: `[${caseType}]${reason}`,
+      touser: lawyerInfo.openid,
+      page: url_route
+    });
 
     return {
       code: Res.SUCCESS.code,
@@ -214,7 +336,9 @@ export default class PayService {
       });
     }
 
-    let result = await WxPayApi.transfers({
+    const payApi = await this.initWxPay();
+
+    let result = payApi.transfers({
       partner_trade_no: generateTradeNumber(),
       openid: lawyer.openid,
       re_user_name: lawyer.real_name,
@@ -246,6 +370,8 @@ export default class PayService {
     const { out_trade_no } = ctx.request.body;
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
     const BalanceRepo = this.getRepository<Balance>(Balance);
+    const relatedCase = this.getRepository<Case>(Case);
+    const UserRepo = this.getRepository<User>(User);
 
     let payOrder: PayOrder = await PayOrderRepo.findOne({
       where: { out_trade_no },
@@ -268,6 +394,25 @@ export default class PayService {
       pay_status: PayOrderStatus.complete
     });
 
+    await relatedCase.update(payOrder.case.id, {
+      status: CaseStatus.complete
+    });
+
+    const { openid } = await UserRepo.findOne(payOrder.case.select_lawyer_id);
+    const { case_type } = payOrder.case;
+
+    const caseType =
+      (case_type === 1 && "文书起草") ||
+      (case_type === 2 && "案件委托") ||
+      (case_type === 3 && "法律顾问") ||
+      (case_type === 3 && "案件查询");
+    await WxService.sendCaseStatusUpdate({
+      caseStatus: "客户已确认订单",
+      comment: `[${caseType}]涉及律师费用更新到钱包`,
+      touser: openid,
+      page: "/"
+    });
+
     return {
       code: Res.SUCCESS.code,
       data: null,
@@ -287,7 +432,9 @@ export default class PayService {
   static async orderQuery(ctx: Context) {
     const { out_trade_no } = ctx.request.body;
 
-    let result = await WxPayApi.orderQuery({
+    const wxPayApi = await this.initWxPay();
+
+    let result = await wxPayApi.orderQuery({
       out_trade_no
     });
 

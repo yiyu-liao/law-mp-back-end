@@ -23,7 +23,7 @@ export default class CaseAppeal {
   out_refund_no: string;
 
   @Column()
-  appeal_reason: string;
+  reason: string;
 
   @OneToOne(type => Case)
   @JoinColumn({ name: "case_id" })
@@ -33,12 +33,18 @@ export default class CaseAppeal {
   @JoinColumn({ name: "pay_id" })
   payOrder: Pay;
 
-  @OneToOne(type => User)
+  @ManyToOne(
+    type => User,
+    user => user.appealOrder
+  )
   @JoinColumn({ name: "appealer_id" })
   appealer: User;
 
   @Column({ default: AppealStatus.pending })
   status: number;
+
+  @Column({ default: "" })
+  rejectReson: string;
 
   @CreateDateColumn({ type: "timestamp" })
   createTime: string;

@@ -4,3 +4,4 @@ yarn.lock
 package.json.lock
 doc
 logs
+config

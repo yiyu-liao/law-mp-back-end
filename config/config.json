@@ -1,0 +1,20 @@
+{
+    "wx": {
+        "appid": "",
+        "appSecret": "",
+        "mchid": "",
+        "partnerKey": "",
+        "pfx": "",
+        "notify_url": "",
+        "spbill_create_ip": "",
+        "message_template": {
+          "verfiy_feedback": "",
+          "refund_feedback": "",
+          "case_status_update": ""
+        }
+      },
+      "cos": {
+        "SecretId": "",
+        "SecretKey": ""
+      }
+}

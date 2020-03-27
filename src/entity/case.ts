@@ -11,6 +11,7 @@ import {
 import Bidders from "./case-bidder";
 import User from "./user";
 import { CaseStatus } from "@src/constant";
+import CasePayOrder from "./case-order";
 
 // export interface IExtraInfo {
 //   description?: string;
@@ -49,6 +50,12 @@ export default class Case {
     bidder => bidder.case
   )
   bidders: Bidders[];
+
+  @OneToMany(
+    type => CasePayOrder,
+    payOrder => payOrder.case
+  )
+  payOrder: CasePayOrder[];
 
   @CreateDateColumn({ type: "timestamp" })
   create_time: string;

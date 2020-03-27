@@ -32,5 +32,15 @@ export const ResponseCode = {
   ADMIN_USRE_NOT_EXIT: {
     code: "ADMIN_USRE_NOT_EXIT",
     msg: "该账号不存在"
+  },
+
+  ADMIN_DISABLE: {
+    code: "ADMIN_DISABLE",
+    msg: "该账号已被禁用"
+  },
+
+  ADMIN_ERROR_PWD: {
+    code: "ADMIN_ERROR_PWD",
+    msg: "密码错误"
   }
 };

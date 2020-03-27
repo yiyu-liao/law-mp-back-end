@@ -239,7 +239,7 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    let result = await getRepository(Case)
+    let caseInfo = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.id = :case_id", { case_id })
       .leftJoinAndSelect("case.publisher", "publisher")
@@ -248,9 +248,21 @@ export default class OrderService {
       .leftJoinAndSelect("lawyer.extra_profile", "bidderMeta")
       .getOne();
 
+    let detail: any = {
+      ...caseInfo
+    };
+
+    if (caseInfo.select_lawyer_id) {
+      const Repo = this.getRepository<User>(User);
+      const selectLawyer = await Repo.findOne(caseInfo.select_lawyer_id, {
+        relations: ["extra_profile"]
+      });
+      detail.selectLawyer = selectLawyer;
+    }
+
     return {
       code: ResponseCode.SUCCESS.code,
-      data: result,
+      data: detail,
       message: ResponseCode.SUCCESS.msg
     };
   }

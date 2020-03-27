@@ -6,14 +6,18 @@ import {
   JoinColumn,
   OneToMany,
   Index,
+  CreateDateColumn,
   PrimaryColumn
 } from "typeorm";
+
+import { UserVerifyStatus } from "@src/constant";
 
 import Lawyer from "./user-lawyer-meta";
 import LegalAdvice from "./advice";
 import Order from "./case";
 import AdviceReply from "./advice-reply";
 import Bidders from "./case-bidder";
+import CaseAppeal from "./case-appeal";
 
 @Entity()
 export default class User {
@@ -21,7 +25,6 @@ export default class User {
   id: number;
 
   @Column()
-  @Index()
   openid: string;
 
   @Column({ default: null })
@@ -36,8 +39,14 @@ export default class User {
   @Column({ default: 0 })
   role: number; // 0 => null role, 1 => customer, 2 => lawyer
 
-  @Column({ default: 1 })
+  @Column({ default: null })
+  phone: string;
+
+  @Column({ default: UserVerifyStatus.init })
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
+
+  @CreateDateColumn({ type: "timestamp" })
+  create_time: string;
 
   @OneToOne(
     type => Lawyer,
@@ -76,4 +85,10 @@ export default class User {
     bidder => bidder.lawyer
   )
   bid_info: Bidders[];
+
+  @OneToMany(
+    type => CaseAppeal,
+    appeal => appeal.appealer
+  )
+  appealOrder: CaseAppeal[];
 }

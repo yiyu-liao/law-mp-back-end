@@ -20,7 +20,10 @@ export default class CasePayOrder {
   @Index()
   out_trade_no: string;
 
-  @OneToOne(type => Case)
+  @ManyToOne(
+    type => Case,
+    targetCase => targetCase.payOrder
+  )
   @JoinColumn({ name: "case_id" })
   case: Case;
 

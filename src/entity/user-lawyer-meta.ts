@@ -18,6 +18,15 @@ export default class UserLawyerMeta {
   @Column({ type: "simple-array", default: null })
   location: string;
 
+  @Column({ type: "simple-array", default: null })
+  expertise_area: string;
+
+  @Column({ default: null })
+  introduction: string;
+
+  @Column({ default: null })
+  office_address: string;
+
   @Column({ default: null })
   experience_year: number;
 

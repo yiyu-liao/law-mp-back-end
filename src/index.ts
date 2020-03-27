@@ -3,22 +3,25 @@ import * as Koa from "koa";
 import { configure, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import * as Router from "koa-router";
-import * as bodyParser from "koa-bodyparser";
-
 import AppRoutes from "./routes";
 
-import jwt = require("koa-jwt");
-import fs = require("fs");
-import path = require("path");
+import * as jwt from "koa-jwt";
+import * as fs from "fs";
+import * as path from "path";
+import * as KoaStatic from "koa-static2";
+import * as koaBody from "koa-body";
+import * as xmlParser from "koa-xml-body-v2";
+
+import OrderService from "@src/service/order";
 
 import ErrorHander from "@src/middleware/ErrorHander";
 
 const publicKey = fs.readFileSync(path.join(__dirname, "../publicKey.pub"));
 
-import { WxPayApi } from "@src/service/order";
-
 createConnection()
   .then(async connection => {
+    const payApi = await OrderService.initWxPay();
+
     // create koa app
     const app = new Koa();
     const router = new Router({
@@ -26,19 +29,25 @@ createConnection()
     });
     const port = process.env.PORT || 9527;
 
+    app.use(
+      xmlParser({
+        key: "xmlBody"
+      })
+    );
+
     // register all application routes
     AppRoutes.forEach(route => {
-      if (route.path === "/pay/refundNoticeCallback") {
+      if (route.path === "/order/payCallback") {
         router[route.method](
           route.path,
-          WxPayApi.middleware("pay"),
-          route.action
+          payApi.middleware("pay"),
+          async ctx => await OrderService.payCallback(ctx)
         );
-      } else if (route.path === "/pay/refundNoticeCallback") {
+      } else if (route.path === "/order/refundCallback") {
         router[route.method](
           route.path,
-          WxPayApi.middleware("refund"),
-          route.action
+          payApi.middleware("refund"),
+          async ctx => await OrderService.refundCallback(ctx)
         );
       } else {
         router[route.method](route.path, route.action);
@@ -46,17 +55,27 @@ createConnection()
     });
 
     app.use(ErrorHander);
+    app.use(KoaStatic("assets", path.resolve(__dirname, "../assets")));
     app.use(
-      jwt({ secret: publicKey }).unless({ path: [/^\/api\/user\/authSession/] })
-    );
-    app.use(
-      bodyParser({
-        enableTypes: ["json", "form", "text"],
-        extendTypes: {
-          text: ["text/xml", "application/xml"]
-        }
+      jwt({ secret: publicKey }).unless({
+        path: [
+          /^\/api\/user\/authSession|\/api\/admin\/login|\/api\/order\/payCallback|\/api\/order\/refundCallback/
+        ]
       })
     );
+    app.use(
+      koaBody({
+        multipart: true,
+        parsedMethods: ["POST", "PUT", "PATCH", "GET", "HEAD", "DELETE"], // parse GET, HEAD, DELETE requests
+        formidable: {
+          uploadDir: path.join(__dirname, "../assets/uploads/tmp")
+        },
+        jsonLimit: "10mb",
+        formLimit: "10mb",
+        textLimit: "10mb"
+      })
+    );
+
     app.use(router.routes());
     app.use(router.allowedMethods());
     app.listen(port);
@@ -85,6 +104,6 @@ createConnection()
       logger.error(JSON.stringify(error));
     });
 
-    console.log(`应用启动成功 端口:${port}`);
+    console.log(`service listening on 🚀🚀🚀: http://localhost:${port}/api`);
   })
-  .catch(error => console.log("TypeORM 链接失败: ", error));
+  .catch(error => console.log("service error 😡: ", error));

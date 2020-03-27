@@ -6,6 +6,7 @@ const Admin = [
     method: "post",
     action: AdminController.login
   },
+
   {
     path: "/admin/addUser",
     method: "post",
@@ -17,14 +18,24 @@ const Admin = [
     action: AdminController.deleteUser
   },
   {
-    path: "/admin/refund",
+    path: "/admin/userList",
     method: "post",
-    action: AdminController.refund
+    action: AdminController.getUserList
   },
   {
-    path: "/admin/refundCallback",
+    path: "/admin/resetPassword",
     method: "post",
-    action: AdminController.refund
+    action: AdminController.resetPassword
+  },
+  {
+    path: "/admin/updateStatus",
+    method: "post",
+    action: AdminController.updateStatus
+  },
+  {
+    path: "/admin/updateBaseInfo",
+    method: "post",
+    action: AdminController.updateBaseInfo
   },
   {
     path: "/admin/appealList",
@@ -32,9 +43,40 @@ const Admin = [
     action: AdminController.getAppealList
   },
   {
-    path: "/admin/userList",
+    path: "/admin/agreeAppeal",
     method: "post",
-    action: AdminController.getUserList
+    action: AdminController.agreeAppealCase
+  },
+  {
+    path: "/admin/rejectAppeal",
+    method: "post",
+    action: AdminController.rejectAppealCase
+  },
+  {
+    path: "/admin/refund",
+    method: "post",
+    action: AdminController.refund
+  },
+  {
+    path: "/admin/clientVerifyUserList",
+    method: "post",
+    action: AdminController.clientVerifyUserList
+  },
+
+  {
+    path: "/admin/getMenusById",
+    method: "post",
+    action: AdminController.getMenusById
+  },
+  {
+    path: "/admin/getPowerById",
+    method: "post",
+    action: AdminController.getPowerById
+  },
+  {
+    path: "/admin/getRoleById",
+    method: "post",
+    action: AdminController.getRoleById
   }
 ];
 

@@ -13,10 +13,38 @@ export default class UserController {
   static async getAppealList(ctx) {
     ctx.body = await AdminService.getAppealList(ctx);
   }
+  static async agreeAppealCase(ctx) {
+    ctx.body = await AdminService.agreeAppealCase(ctx);
+  }
+  static async rejectAppealCase(ctx) {
+    ctx.body = await AdminService.rejectAppealCase(ctx);
+  }
   static async getUserList(ctx) {
     ctx.body = await AdminService.getUserList(ctx);
   }
   static async refund(ctx) {
     ctx.body = await AdminService.refund(ctx);
+  }
+  static async resetPassword(ctx) {
+    ctx.body = await AdminService.resetPassword(ctx);
+  }
+  static async updateStatus(ctx) {
+    ctx.body = await AdminService.updateUserStatus(ctx);
+  }
+  static async updateBaseInfo(ctx) {
+    ctx.body = await AdminService.updateBaseInfo(ctx);
+  }
+  static async clientVerifyUserList(ctx) {
+    ctx.body = await AdminService.getClientVerifyUserList(ctx);
+  }
+
+  static async getMenusById(ctx) {
+    ctx.body = await AdminService.getMenusById(ctx);
+  }
+  static async getPowerById(ctx) {
+    ctx.body = await AdminService.getPowerById(ctx);
+  }
+  static async getRoleById(ctx) {
+    ctx.body = await AdminService.getRoleById(ctx);
   }
 }

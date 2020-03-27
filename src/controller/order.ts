@@ -7,6 +7,9 @@ export default class OrderController {
   static async payNoticeCallback(ctx) {
     ctx.body = await OrderService.payCallback(ctx);
   }
+  static async refundCallback(ctx) {
+    ctx.body = await OrderService.refundCallback(ctx);
+  }
   static async applyRefund(ctx) {
     ctx.body = await OrderService.applyRefund(ctx);
   }

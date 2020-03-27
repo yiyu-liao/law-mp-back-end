@@ -101,7 +101,6 @@ export default class UserService {
    * @apiParam {String} id_photo  正冠照片(extra_profile)
    * @apiParam {String} license_photo  律师执业证照片(extra_profile)
    * @apiParam {String} license_no  律师执业编号(extra_profile)
-   * @apiParam {String} license_no  律师执业编号(extra_profile)
    *
    * @apiParamExample {json} Request-Example:
    *     {
@@ -123,7 +122,7 @@ export default class UserService {
     const userRepo = this.getRepository<User>(User);
     const lawyerRepo = this.getRepository<Lawyer>(Lawyer);
 
-    const { user_id, base_info, extra_profile } = context.request.body;
+    const { user_id, base_info, extra_profile, openid } = context.request.body;
 
     if (!user_id) {
       const error = {
@@ -144,8 +143,14 @@ export default class UserService {
         const user = userRepo.create({
           ...toUpdateFiles
         });
-
         await userRepo.update(user_id, user);
+        if (toUpdateFiles.verify_status === 3) {
+          await WxService.sendLawyerVerifyResult({
+            touser: openid,
+            result: "认证通过",
+            comment: "认证通过后，可进行咨询回复，抢单报价服务"
+          });
+        }
       }
     }
 
