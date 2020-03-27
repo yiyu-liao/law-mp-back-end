@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "start": "cross-env NODE_ENV=dev nodemon",
-    "build": "rm -rf dist && tsc && tspath",
+    "build": "rm -rf dist && tsc && tspath -f",
     "pro": "node_modules/.bin/pm2 start --env=production",
     "stop": "node_modules/.bin/pm2 stop all",
     "doc": "node_modules/.bin/apidoc -i src/ -o doc/"
