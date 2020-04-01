@@ -127,7 +127,7 @@ export default class PayService {
       pay_status: PayOrderStatus.success
     });
     await CaseOrderRepo.update(payOrder.case.id, {
-      status: CaseStatus.pending
+      status: CaseStatus.processing
     });
 
     // TODO: send message to lawyer client
