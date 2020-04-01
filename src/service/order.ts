@@ -140,36 +140,48 @@ export default class PayService {
    * @apiName applyRefund
    * @apiGroup WxPay
    *
-   * @apiParam {String} out_trade_no 支付订单out_trade_no
+   * @apiParam {String} case_id 案件id
    * @apiParam {String} appealer_id 申诉人id
-   * @apiParam {String} appealer_reason 申诉理由
+   * @apiParam {String} reason 申诉理由
    *
    * @apiSuccess {String} code S_Ok
    */
   static async applyRefund(ctx: Context) {
-    const { out_trade_no, appealer_id, appeal_reason } = ctx.request.body;
+    const { case_id, appealer_id, reason } = ctx.request.body;
 
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
     const CaseOrderRepo = this.getRepository<Case>(Case);
     const UserRepo = this.getRepository<User>(User);
     const AppealRepo = this.getRepository<Appeal>(Appeal);
 
-    let payOrder: PayOrder = await PayOrderRepo.findOne({
-      where: { out_trade_no },
-      relations: ["case"]
-    });
-    await PayOrderRepo.update(payOrder.id, {
-      pay_status: PayOrderStatus.appeal
-    });
-    await CaseOrderRepo.update(payOrder.case.id, {
+    // let payOrder: PayOrder = await PayOrderRepo.findOne({
+    //   where: { out_trade_no },
+    //   relations: ["case"]
+    // });
+    // await PayOrderRepo.update(payOrder.id, {
+    //   pay_status: PayOrderStatus.appeal
+    // });
+
+    let payOrder = await getRepository(PayOrder)
+      .createQueryBuilder("order")
+      .innerJoinAndSelect("order.case", "case", "case.id := case_id", {
+        case_id
+      })
+      .getOne();
+
+    await CaseOrderRepo.update(case_id, {
       status: CaseStatus.appeal
     });
+
+    let refundCase = new Case();
+    refundCase.id = case_id;
 
     let appealer = await UserRepo.findOne(appealer_id);
 
     let appealOrder = AppealRepo.create({
-      appeal_reason,
-      payOrder: payOrder,
+      reason,
+      payOrder,
+      case: refundCase,
       appealer
     });
 

@@ -12,12 +12,23 @@ export enum CaseStatus {
   bidding,
   pending,
   processing,
-  complete,
   appeal,
-  cancel
+  pendingConfirm,
+  complete
 }
 
 export enum AppealStatus {
   pending,
   success
+}
+
+export enum AdminUserStatus {
+  disable,
+  enable
+}
+
+export enum UserVerifyStatus {
+  init = 1,
+  applyVerify = 2,
+  verify = 3
 }

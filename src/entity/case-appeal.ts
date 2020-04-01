@@ -23,7 +23,7 @@ export default class CaseAppeal {
   out_refund_no: string;
 
   @Column()
-  appeal_reason: string;
+  reason: string;
 
   @OneToOne(type => Case)
   @JoinColumn({ name: "case_id" })

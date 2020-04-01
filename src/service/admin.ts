@@ -5,12 +5,17 @@ import User from "@src/entity/user.ts";
 import Appeal from "@src/entity/case-appeal";
 import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
+import { UserVerifyStatus } from "@src/constant";
+
+import * as moment from "moment";
+moment.locale();
 
 import {
   ResponseCode as RES,
   PayOrderStatus,
   CaseStatus,
-  AppealStatus
+  AppealStatus,
+  AdminUserStatus
 } from "@src/constant";
 
 import { WxPayApi } from "./order";
@@ -19,6 +24,7 @@ import {
   createHttpResponse,
   doCrypto,
   comparePasword,
+  generatePassword,
   generateTradeNumber
 } from "@src/shared";
 
@@ -55,16 +61,32 @@ export default class AdminService {
     const user = await UserRepo.findOne({ where: { username } });
 
     if (user) {
-      let isCorrect = comparePasword(password, user.password);
+      if (user.status === AdminUserStatus.disable) {
+        let { code, msg } = RES.ADMIN_DISABLE;
+        return createHttpResponse(code, msg);
+      }
 
+      let isCorrect = await comparePasword(password, user.password);
       if (isCorrect) {
+        await UserRepo.update(
+          {
+            id: user.id
+          },
+          { lastLoginTime: moment().format("LLL") }
+        );
+
         let { code, msg } = RES.SUCCESS;
+        delete user.password;
         let data = {
+          ...user,
           token: this.createToken({
             username
           })
         };
         return createHttpResponse(code, msg, data);
+      } else {
+        let { code, msg } = RES.ADMIN_ERROR_PWD;
+        return createHttpResponse(code, msg);
       }
     } else {
       let { code, msg } = RES.ADMIN_USRE_NOT_EXIT;
@@ -82,7 +104,7 @@ export default class AdminService {
    * @apiSuccess {String} code S_Ok
    */
   static async addUser(ctx: Context) {
-    const { username, password } = ctx.request.body;
+    const { username, password, nickname } = ctx.request.body;
 
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
@@ -95,13 +117,15 @@ export default class AdminService {
       const cryptoPassword = await doCrypto(password);
       const newUser = UserRepo.create({
         username,
-        password: cryptoPassword
+        password: cryptoPassword,
+        nickname
       });
 
-      UserRepo.save(newUser);
+      let result = await UserRepo.save(newUser);
 
       let { code, msg } = RES.SUCCESS;
-      return createHttpResponse(code, msg);
+      delete result.password;
+      return createHttpResponse(code, msg, result);
     }
   }
 
@@ -114,14 +138,74 @@ export default class AdminService {
    * @apiSuccess {String} code S_Ok
    */
   static async removeUser(ctx: Context) {
-    const { user_id } = ctx.request.body;
+    const { ids } = ctx.request.body;
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
-    let deleteUser = UserRepo.create({
-      id: user_id
+    await UserRepo.delete(ids);
+
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg);
+  }
+
+  /**
+   * @api {post} /api/admin/update 更新基本信息
+   * @apiGroup Admin
+   *
+   * @apiParam {String} user_id 用户id
+   * @apiParam {Object} base_info 更新的基本信息
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async updateBaseInfo(ctx: Context) {
+    const { id, info } = ctx.request.body;
+    const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
+
+    await UserRepo.update(id, JSON.parse(info));
+
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg);
+  }
+
+  /**
+   * @api {post} /api/admin/resetPassword 重置密码
+   * @apiGroup Admin
+   *
+   * @apiParam {String} id 用户id
+   * @apiParam {Object} base_info 更新的基本信息
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async resetPassword(ctx: Context) {
+    const { id } = ctx.request.body;
+    const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
+
+    const password = generatePassword(true, 8, 12, false);
+
+    const cryptoPassword = await doCrypto(password);
+
+    await UserRepo.update(id, {
+      password: cryptoPassword
     });
 
-    await UserRepo.remove(deleteUser);
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg, { password });
+  }
+
+  /**
+   * @api {post} /api/admin/updateStatus 重置密码
+   * @apiGroup Admin
+   *
+   * @apiParam {String} ids 用户ids
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async updateUserStatus(ctx: Context) {
+    const { ids, status } = ctx.request.body;
+    const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
+
+    await UserRepo.update(ids, {
+      status
+    });
 
     let { code, msg } = RES.SUCCESS;
     return createHttpResponse(code, msg);
@@ -180,16 +264,14 @@ export default class AdminService {
     });
 
     await PayOrderRepo.update(appeal.payOrder.id, {
-      pay_status: PayOrderStatus.cancel
+      pay_status: PayOrderStatus.complete
     });
     await CaseOrderRepo.update(appeal.case.id, {
-      status: CaseStatus.cancel
+      status: CaseStatus.complete
     });
 
     return ctx.reply();
   }
-
-  static async resetPassword(ctx: Context) {}
 
   static async uploadBanner(ctx: Context) {}
 
@@ -221,6 +303,17 @@ export default class AdminService {
   static async getUserList(ctx: Context) {
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
     const result = await UserRepo.find();
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg, result);
+  }
+
+  static async getClientVerifyUserList(ctx: Context) {
+    const ClientUser = this.getRepository<User>(User);
+
+    const result = await ClientUser.find({
+      where: { verify_status: UserVerifyStatus.applyVerify }
+    });
+
     let { code, msg } = RES.SUCCESS;
     return createHttpResponse(code, msg, result);
   }

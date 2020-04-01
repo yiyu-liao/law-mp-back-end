@@ -17,6 +17,31 @@ const Admin = [
     action: AdminController.deleteUser
   },
   {
+    path: "/admin/userList",
+    method: "post",
+    action: AdminController.getUserList
+  },
+  {
+    path: "/admin/resetPassword",
+    method: "post",
+    action: AdminController.resetPassword
+  },
+  {
+    path: "/admin/updateStatus",
+    method: "post",
+    action: AdminController.updateStatus
+  },
+  {
+    path: "/admin/updateBaseInfo",
+    method: "post",
+    action: AdminController.updateBaseInfo
+  },
+  {
+    path: "/admin/appealList",
+    method: "post",
+    action: AdminController.getAppealList
+  },
+  {
     path: "/admin/refund",
     method: "post",
     action: AdminController.refund
@@ -27,14 +52,9 @@ const Admin = [
     action: AdminController.refund
   },
   {
-    path: "/admin/appealList",
+    path: "/admin/clientVerifyUserList",
     method: "post",
-    action: AdminController.getAppealList
-  },
-  {
-    path: "/admin/userList",
-    method: "post",
-    action: AdminController.getUserList
+    action: AdminController.clientVerifyUserList
   }
 ];
 
