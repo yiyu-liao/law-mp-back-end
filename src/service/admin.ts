@@ -222,11 +222,16 @@ export default class AdminService {
    * @apiSuccess {String} code S_Ok
    */
   static async refund(ctx: Context) {
-    const { out_trade_no, total_fee, refund_fee } = ctx.request.body;
+    const {
+      out_trade_no,
+      out_refund_no,
+      total_fee,
+      refund_fee
+    } = ctx.request.body;
 
     let result = await WxPayApi.refund({
       out_trade_no: out_trade_no,
-      out_refund_no: generateTradeNumber(),
+      out_refund_no,
       total_fee,
       refund_fee: refund_fee || total_fee
     });

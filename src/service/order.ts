@@ -171,12 +171,11 @@ export default class PayService {
       status: CaseStatus.appeal
     });
 
-    let refundCase = new Case();
-    refundCase.id = case_id;
-
+    let refundCase = await CaseOrderRepo.findOne(case_id);
     let appealer = await UserRepo.findOne(appealer_id);
 
     let appealOrder = AppealRepo.create({
+      out_refund_no: generateTradeNumber(),
       reason,
       payOrder,
       case: refundCase,

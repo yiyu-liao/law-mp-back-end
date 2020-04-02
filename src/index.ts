@@ -46,11 +46,11 @@ createConnection()
     });
 
     app.use(ErrorHander);
-    app.use(
-      jwt({ secret: publicKey }).unless({
-        path: [/^\/api\/user\/authSession|\/api\/admin\/login/]
-      })
-    );
+    // app.use(
+    //   jwt({ secret: publicKey }).unless({
+    //     path: [/^\/api\/user\/authSession|\/api\/admin\/login/]
+    //   })
+    // );
     app.use(
       bodyParser({
         enableTypes: ["json", "form", "text"],
