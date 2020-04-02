@@ -164,9 +164,7 @@ export default class PayService {
 
     let payOrder = await getRepository(PayOrder)
       .createQueryBuilder("order")
-      .innerJoinAndSelect("order.case", "case", "case.id := case_id", {
-        case_id
-      })
+      .where("order.case_id = :case_id", { case_id })
       .getOne();
 
     await CaseOrderRepo.update(case_id, {
