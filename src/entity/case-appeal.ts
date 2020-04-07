@@ -33,7 +33,10 @@ export default class CaseAppeal {
   @JoinColumn({ name: "pay_id" })
   payOrder: Pay;
 
-  @OneToOne(type => User)
+  @ManyToOne(
+    type => User,
+    user => user.appealOrder
+  )
   @JoinColumn({ name: "appealer_id" })
   appealer: User;
 
