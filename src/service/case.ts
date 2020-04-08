@@ -254,7 +254,9 @@ export default class OrderService {
 
     if (caseInfo.select_lawyer_id) {
       const Repo = this.getRepository<User>(User);
-      const selectLawyer = await Repo.findOne(caseInfo.select_lawyer_id);
+      const selectLawyer = await Repo.findOne(caseInfo.select_lawyer_id, {
+        relations: ["extra_profile"]
+      });
       detail.selectLawyer = selectLawyer;
     }
 
