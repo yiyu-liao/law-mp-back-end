@@ -19,6 +19,9 @@ export default class UserController {
   static async refund(ctx) {
     ctx.body = await AdminService.refund(ctx);
   }
+  static async refundCallback(ctx) {
+    ctx.body = await AdminService.refundCallback(ctx);
+  }
   static async resetPassword(ctx) {
     ctx.body = await AdminService.resetPassword(ctx);
   }

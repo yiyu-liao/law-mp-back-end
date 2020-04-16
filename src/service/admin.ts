@@ -10,6 +10,8 @@ import { UserVerifyStatus } from "@src/constant";
 import * as moment from "moment";
 moment.locale();
 
+import { WxPayApi } from "@src/service/order";
+
 import {
   ResponseCode as RES,
   PayOrderStatus,
@@ -17,8 +19,6 @@ import {
   AppealStatus,
   AdminUserStatus
 } from "@src/constant";
-
-import { WxPayApi } from "./order";
 
 import {
   createHttpResponse,

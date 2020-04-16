@@ -7,15 +7,17 @@ import * as bodyParser from "koa-bodyparser";
 
 import AppRoutes from "./routes";
 
-import jwt = require("koa-jwt");
-import fs = require("fs");
-import path = require("path");
+import * as jwt from "koa-jwt";
+import * as fs from "fs";
+import * as path from "path";
+import * as KoaBody from "koa-body";
+import * as KoaStatic from "koa-static2";
+import { WxPayApi } from "@src/service/order";
 
 import ErrorHander from "@src/middleware/ErrorHander";
+import koaBody = require("koa-body");
 
 const publicKey = fs.readFileSync(path.join(__dirname, "../publicKey.pub"));
-
-import { WxPayApi } from "@src/service/order";
 
 createConnection()
   .then(async connection => {
@@ -46,6 +48,7 @@ createConnection()
     });
 
     app.use(ErrorHander);
+    app.use(KoaStatic("assets", path.resolve(__dirname, "../assets")));
     // app.use(
     //   jwt({ secret: publicKey }).unless({
     //     path: [/^\/api\/user\/authSession|\/api\/admin\/login/]
@@ -59,6 +62,15 @@ createConnection()
         }
       })
     );
+    app.use(
+      koaBody({
+        multipart: true,
+        formidable: {
+          uploadDir: path.join(__dirname, "../assets/uploads/tmp")
+        }
+      })
+    );
+
     app.use(router.routes());
     app.use(router.allowedMethods());
     app.listen(port);

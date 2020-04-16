@@ -1,5 +1,7 @@
 import AdminController from "@src/controller/admin";
 
+import { WxPayApi } from "@src/service/order";
+
 const Admin = [
   {
     path: "/admin/login",
@@ -49,7 +51,7 @@ const Admin = [
   {
     path: "/admin/refundCallback",
     method: "post",
-    action: AdminController.refund
+    action: AdminController.refundCallback
   },
   {
     path: "/admin/clientVerifyUserList",
