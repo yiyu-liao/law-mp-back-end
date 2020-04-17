@@ -29,7 +29,7 @@ export default class File {
       return new Promise((resolve, reject) => {
         cos.putObject(
           {
-            Bucket: "hj-1257037304",
+            Bucket: "hr-1257037304",
             Region: "ap-guangzhou",
             Key: file.name,
             Body: fs.createReadStream(file.path),
