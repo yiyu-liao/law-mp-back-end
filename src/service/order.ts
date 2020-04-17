@@ -20,9 +20,9 @@ import Balance from "@src/entity/user-balance";
 import HttpException from "@src/shared/http-exception";
 
 export const WxPayApi = new tenPay({
-  appid: Config.appid,
-  mchid: Config.mchid,
-  partnerKey: Config.partnerKey,
+  appid: Config["wx"].appid,
+  mchid: Config["wx"].mchid,
+  partnerKey: Config["wx"].partnerKey,
   pfx: "",
   notify_url: "",
   refund_url: ""

@@ -37,8 +37,8 @@ export default class WxService {
     return Axios.get(url, {
       params: {
         grant_type: "authorization_code",
-        appid: Config.appid,
-        secret: Config.appSecret,
+        appid: Config["wx"].appid,
+        secret: Config["wx"].appSecret,
         js_code
       }
     });
@@ -50,8 +50,8 @@ export default class WxService {
     return Axios.get(url, {
       params: {
         grant_type: "client_credential",
-        appid: Config.appid,
-        secret: Config.appSecret
+        appid: Config["wx"].appid,
+        secret: Config["wx"].appSecret
       }
     });
   }
@@ -71,7 +71,7 @@ export default class WxService {
       data: {
         access_token: ACCESS_TOKEN,
         touser: payload.touser,
-        template_id: Config.subscribe_temple_id,
+        template_id: Config["wx"].subscribe_temple_id,
         // page: payload.page,
         data: {
           thing1: {
