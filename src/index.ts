@@ -3,14 +3,11 @@ import * as Koa from "koa";
 import { configure, getLogger } from "log4js";
 import { createConnection } from "typeorm";
 import * as Router from "koa-router";
-import * as bodyParser from "koa-bodyparser";
-
 import AppRoutes from "./routes";
 
 import * as jwt from "koa-jwt";
 import * as fs from "fs";
 import * as path from "path";
-import * as KoaBody from "koa-body";
 import * as KoaStatic from "koa-static2";
 import { WxPayApi } from "@src/service/order";
 
@@ -55,19 +52,15 @@ createConnection()
     //   })
     // );
     app.use(
-      bodyParser({
-        enableTypes: ["json", "form", "text"],
-        extendTypes: {
-          text: ["text/xml", "application/xml"]
-        }
-      })
-    );
-    app.use(
       koaBody({
         multipart: true,
+        parsedMethods: ["POST", "PUT", "PATCH", "GET", "HEAD", "DELETE"], // parse GET, HEAD, DELETE requests
         formidable: {
           uploadDir: path.join(__dirname, "../assets/uploads/tmp")
-        }
+        },
+        jsonLimit: "10mb",
+        formLimit: "10mb",
+        textLimit: "10mb"
       })
     );
 
