@@ -46,11 +46,11 @@ createConnection()
 
     app.use(ErrorHander);
     app.use(KoaStatic("assets", path.resolve(__dirname, "../assets")));
-    // app.use(
-    //   jwt({ secret: publicKey }).unless({
-    //     path: [/^\/api\/user\/authSession|\/api\/admin\/login/]
-    //   })
-    // );
+    app.use(
+      jwt({ secret: publicKey }).unless({
+        path: [/^\/api\/user\/authSession|\/api\/admin\/login/]
+      })
+    );
     app.use(
       koaBody({
         multipart: true,
