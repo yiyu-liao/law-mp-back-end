@@ -20,6 +20,14 @@ export default class File {
   static async uploadFile(ctx: Context) {
     const files = ctx.request.files.files;
 
+    let fileArray = null;
+
+    if (!Array.isArray(files)) {
+      fileArray = [files];
+    } else {
+      fileArray = files;
+    }
+
     const cos = new COS({
       SecretId: Config["cos"].SecretId,
       SecretKey: Config["cos"].SecretKey
@@ -56,7 +64,7 @@ export default class File {
       );
     };
 
-    const urls = await invokeUpload(files);
+    const urls = await invokeUpload(fileArray);
 
     let { code, msg } = ResponseCode.SUCCESS;
     return createHttpResponse(code, msg, { urls });
