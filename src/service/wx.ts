@@ -1,5 +1,5 @@
 import Axios from "axios";
-import * as Config from "../../config.js";
+import * as Config from "../../config/config.json";
 
 import { getManager, Repository, LessThan, Like, MoreThan } from "typeorm";
 
@@ -66,26 +66,23 @@ export default class WxService {
 
     if (!ACCESS_TOKEN) return;
     const url = `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${ACCESS_TOKEN}`;
-    console.log("touser", payload.touser);
     return Axios.post(url, {
+      access_token: ACCESS_TOKEN,
+      touser: "ofTz25ZkyNL0ZL-BPrhEnaikTApI",
+      template_id: Config["wx"].subscribe_temple_id,
+      page: "/",
       data: {
-        access_token: ACCESS_TOKEN,
-        touser: payload.touser,
-        template_id: Config["wx"].subscribe_temple_id,
-        // page: payload.page,
-        data: {
-          thing1: {
-            value: payload.content
-          },
-          time2: {
-            value: time
-          },
-          name3: {
-            value: payload.replyer
-          },
-          thing4: {
-            value: payload.title
-          }
+        thing1: {
+          value: payload.content
+        },
+        time2: {
+          value: time
+        },
+        name3: {
+          value: payload.replyer
+        },
+        thing4: {
+          value: payload.title
         }
       }
     });

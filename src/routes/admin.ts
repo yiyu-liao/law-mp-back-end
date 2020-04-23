@@ -8,6 +8,7 @@ const Admin = [
     method: "post",
     action: AdminController.login
   },
+
   {
     path: "/admin/addUser",
     method: "post",
@@ -44,6 +45,16 @@ const Admin = [
     action: AdminController.getAppealList
   },
   {
+    path: "/admin/agreeAppeal",
+    method: "post",
+    action: AdminController.agreeAppealCase
+  },
+  {
+    path: "/admin/rejectAppeal",
+    method: "post",
+    action: AdminController.rejectAppealCase
+  },
+  {
     path: "/admin/refund",
     method: "post",
     action: AdminController.refund
@@ -57,6 +68,22 @@ const Admin = [
     path: "/admin/clientVerifyUserList",
     method: "post",
     action: AdminController.clientVerifyUserList
+  },
+
+  {
+    path: "/admin/getMenusById",
+    method: "post",
+    action: AdminController.getMenusById
+  },
+  {
+    path: "/admin/getPowerById",
+    method: "post",
+    action: AdminController.getPowerById
+  },
+  {
+    path: "/admin/getRoleById",
+    method: "post",
+    action: AdminController.getRoleById
   }
 ];
 

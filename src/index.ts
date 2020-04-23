@@ -9,10 +9,12 @@ import * as jwt from "koa-jwt";
 import * as fs from "fs";
 import * as path from "path";
 import * as KoaStatic from "koa-static2";
+import * as koaBody from "koa-body";
+import * as xmlParser from "koa-xml-body-v2";
+
 import { WxPayApi } from "@src/service/order";
 
 import ErrorHander from "@src/middleware/ErrorHander";
-import koaBody = require("koa-body");
 
 const publicKey = fs.readFileSync(path.join(__dirname, "../publicKey.pub"));
 
@@ -27,13 +29,13 @@ createConnection()
 
     // register all application routes
     AppRoutes.forEach(route => {
-      if (route.path === "/pay/refundNoticeCallback") {
+      if (route.path === "/order/payCallback") {
         router[route.method](
           route.path,
           WxPayApi.middleware("pay"),
           route.action
         );
-      } else if (route.path === "/pay/refundNoticeCallback") {
+      } else if (route.path === "/admin/refundCallback") {
         router[route.method](
           route.path,
           WxPayApi.middleware("refund"),
@@ -51,6 +53,7 @@ createConnection()
         path: [/^\/api\/user\/authSession|\/api\/admin\/login/]
       })
     );
+    app.use(xmlParser());
     app.use(
       koaBody({
         multipart: true,
@@ -92,6 +95,6 @@ createConnection()
       logger.error(JSON.stringify(error));
     });
 
-    console.log(`应用启动成功 端口:${port}`);
+    console.log(`应用启动成功: http://localhost:${port}/api`);
   })
   .catch(error => console.log("TypeORM 链接失败: ", error));

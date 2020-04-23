@@ -138,8 +138,14 @@ export function generatePassword(randomFlag, min, max, specialChar) {
   return generatePassword(randomFlag, min, max, specialChar);
 }
 
-export function createHttpResponse(code: string, msg: string, data?: any) {
+export function createHttpResponse(
+  code: string,
+  msg: string,
+  data?: any,
+  status?: number
+) {
   return {
+    status,
     code,
     data,
     message: msg

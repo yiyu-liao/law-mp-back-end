@@ -1,5 +1,7 @@
 export { ResponseCode } from "./responseCode";
 
+export * from "./adminPlaform";
+
 export enum PayOrderStatus {
   prepay,
   success,
@@ -14,12 +16,15 @@ export enum CaseStatus {
   processing,
   appeal,
   pendingConfirm,
-  complete
+  complete,
+  cancel
 }
 
 export enum AppealStatus {
   pending,
-  success
+  cancel,
+  agree,
+  reject
 }
 
 export enum AdminUserStatus {

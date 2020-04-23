@@ -16,14 +16,23 @@ export default class UserAdmin {
   @Index()
   username: string;
 
-  @Column()
-  nickname: string;
-
-  @Column({ default: AdminUserStatus.enable }) // 0, 禁用； 1，启用
-  status: number;
-
   @Column({})
   password: string;
+
+  @Column({ default: null })
+  phone: string;
+
+  @Column({ default: null })
+  email: string;
+
+  @Column({ default: null })
+  desc: string;
+
+  @Column({ default: AdminUserStatus.enable }) // 0, 禁用； 1，启用
+  conditions: number;
+
+  @Column({ type: "simple-array" })
+  roles: number[];
 
   @Column({ default: null, name: "last_login_time" })
   lastLoginTime: string;

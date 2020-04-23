@@ -109,7 +109,7 @@ export default class AdviceService {
 
     let res = await ReplyRepo.save(reply);
 
-    const { data } = await WxService.sendMessageToUser({
+    const wsRes = await WxService.sendMessageToUser({
       touser: to.openid,
       replyer: from.real_name,
       content,
@@ -120,7 +120,7 @@ export default class AdviceService {
       code: ResponseCode.SUCCESS.code,
       data: res,
       message: ResponseCode.SUCCESS.msg,
-      subscribeRes: data
+      subscribeRes: wsRes.data
     };
   }
 

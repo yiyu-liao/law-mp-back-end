@@ -1,24 +1,27 @@
 import { Context } from "koa";
-import { getManager, Repository, getRepository } from "typeorm";
+import { getManager, Repository, getRepository, MoreThan } from "typeorm";
 import UserAdmin from "@src/entity/user-admin";
 import User from "@src/entity/user.ts";
 import Appeal from "@src/entity/case-appeal";
 import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
-import { UserVerifyStatus } from "@src/constant";
-
-import * as moment from "moment";
-moment.locale();
-
-import { WxPayApi } from "@src/service/order";
-
+import Balance from "@src/entity/user-balance";
 import {
+  UserVerifyStatus,
+  AdminMenu,
+  AdminPower,
+  AdminRole,
   ResponseCode as RES,
   PayOrderStatus,
   CaseStatus,
   AppealStatus,
   AdminUserStatus
 } from "@src/constant";
+
+import * as moment from "moment";
+moment.locale();
+
+import { WxPayApi } from "@src/service/order";
 
 import {
   createHttpResponse,
@@ -61,12 +64,13 @@ export default class AdminService {
     const user = await UserRepo.findOne({ where: { username } });
 
     if (user) {
-      if (user.status === AdminUserStatus.disable) {
+      if (user.conditions === AdminUserStatus.disable) {
         let { code, msg } = RES.ADMIN_DISABLE;
         return createHttpResponse(code, msg);
       }
 
       let isCorrect = await comparePasword(password, user.password);
+
       if (isCorrect) {
         await UserRepo.update(
           {
@@ -83,7 +87,7 @@ export default class AdminService {
             username
           })
         };
-        return createHttpResponse(code, msg, data);
+        return createHttpResponse(code, msg, data, 200);
       } else {
         let { code, msg } = RES.ADMIN_ERROR_PWD;
         return createHttpResponse(code, msg);
@@ -92,6 +96,65 @@ export default class AdminService {
       let { code, msg } = RES.ADMIN_USRE_NOT_EXIT;
       return createHttpResponse(code, msg, user);
     }
+  }
+
+  static async getRoleById(ctx: Context) {
+    const { id } = ctx.request.body;
+
+    let res = AdminRole;
+
+    // if (id instanceof Array) {
+    //   res = AdminRole.filter(function (item) {
+    //     return id.includes(item.id);
+    //   });
+    // } else {
+    //   const t = AdminRole.find(function (item) {
+    //     return item.id === id;
+    //   });
+    //   res.push(t);
+    // }
+
+    let { code, msg } = RES.SUCCESS;
+
+    return createHttpResponse(code, msg, res, 200);
+  }
+
+  static async getPowerById(ctx: Context) {
+    const { params: p } = ctx.request.body;
+
+    let res = AdminPower;
+    // if (p.id instanceof Array) {
+    //   res = AdminPower.filter(function (item) {
+    //     return p.id.includes(item.id);
+    //   });
+    // } else {
+    //   const t = AdminPower.find(function (item) {
+    //     return item.id === p.id;
+    //   });
+    //   res.push(t);
+    // }
+
+    let { code, msg } = RES.SUCCESS;
+
+    return createHttpResponse(code, msg, res, 200);
+  }
+
+  static async getMenusById(ctx: Context) {
+    const { params: p } = ctx.request.body;
+
+    let res = AdminMenu;
+    // if (p.id instanceof Array) {
+    //   res = AdminMenu.filter(function (item) {
+    //     return p.id.includes(item.id);
+    //   });
+    // } else {
+    //   const t = AdminMenu.find(function (item) {
+    //     return item.id === p.id;
+    //   });
+    //   res.push(t);
+    // }
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg, res, 200);
   }
 
   /**
@@ -104,21 +167,23 @@ export default class AdminService {
    * @apiSuccess {String} code S_Ok
    */
   static async addUser(ctx: Context) {
-    const { username, password, nickname } = ctx.request.body;
+    const params: UserAdmin = ctx.request.body;
 
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
-    const user = await UserRepo.findOne({ where: { username } });
+    const user = await UserRepo.findOne({
+      where: { username: params.username }
+    });
 
     if (user) {
       let { code, msg } = RES.ADMIN_USER_ALREADY_EXIT;
       return createHttpResponse(code, msg);
     } else {
-      const cryptoPassword = await doCrypto(password);
+      const cryptoPassword = await doCrypto(params.password);
       const newUser = UserRepo.create({
-        username,
+        ...params,
         password: cryptoPassword,
-        nickname
+        roles: [1]
       });
 
       let result = await UserRepo.save(newUser);
@@ -138,17 +203,17 @@ export default class AdminService {
    * @apiSuccess {String} code S_Ok
    */
   static async removeUser(ctx: Context) {
-    const { ids } = ctx.request.body;
+    const { id } = ctx.request.body;
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
-    await UserRepo.delete(ids);
+    await UserRepo.delete(id);
 
     let { code, msg } = RES.SUCCESS;
     return createHttpResponse(code, msg);
   }
 
   /**
-   * @api {post} /api/admin/update 更新基本信息
+   * @api {post} /api/admin/updateBaseInfo 更新基本信息
    * @apiGroup Admin
    *
    * @apiParam {String} user_id 用户id
@@ -157,10 +222,22 @@ export default class AdminService {
    * @apiSuccess {String} code S_Ok
    */
   static async updateBaseInfo(ctx: Context) {
-    const { id, info } = ctx.request.body;
+    const params = ctx.request.body;
+
+    const id: string = params.id;
+
+    delete params.id;
+
+    const { password } = params;
+
+    if (password) {
+      const cryptoPassword = await doCrypto(password);
+      params.password = cryptoPassword;
+    }
+
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
-    await UserRepo.update(id, JSON.parse(info));
+    await UserRepo.update(id, params);
 
     let { code, msg } = RES.SUCCESS;
     return createHttpResponse(code, msg);
@@ -192,19 +269,19 @@ export default class AdminService {
   }
 
   /**
-   * @api {post} /api/admin/updateStatus 重置密码
+   * @api {post} /api/admin/updateStatus 改变用户状态
    * @apiGroup Admin
    *
-   * @apiParam {String} ids 用户ids
+   * @apiParam {String} ids 用户id
    *
    * @apiSuccess {String} code S_Ok
    */
   static async updateUserStatus(ctx: Context) {
-    const { ids, status } = ctx.request.body;
+    const { id, conditions } = ctx.request.body;
     const UserRepo = this.getRepository<UserAdmin>(UserAdmin);
 
-    await UserRepo.update(ids, {
-      status
+    await UserRepo.update(id, {
+      conditions
     });
 
     let { code, msg } = RES.SUCCESS;
@@ -265,14 +342,15 @@ export default class AdminService {
     }
 
     await AppealRepo.update(appeal.id, {
-      status: AppealStatus.success
+      status: AppealStatus.agree
     });
 
-    await PayOrderRepo.update(appeal.payOrder.id, {
-      pay_status: PayOrderStatus.complete
-    });
+    appeal.payOrder &&
+      (await PayOrderRepo.update(appeal.payOrder.id, {
+        pay_status: PayOrderStatus.cancel
+      }));
     await CaseOrderRepo.update(appeal.case.id, {
-      status: CaseStatus.complete
+      status: CaseStatus.cancel
     });
 
     return ctx.reply();
@@ -300,6 +378,88 @@ export default class AdminService {
   }
 
   /**
+   * @api {post} /api/admin/agreeAppeal 同意申诉
+   * @apiParam {Number} appeal_id
+   * @apiParam {Number} client_id
+   * @apiParam {Number} lawyer_id
+   * @apiGroup Admin
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async agreeAppealCase(ctx: Context) {
+    const { appeal_id, client_id, lawyer_id } = ctx.request.body;
+    const AppealRepo = this.getRepository<Appeal>(Appeal);
+
+    // TO DO: 消息推送
+
+    const appealInfo = <Appeal>await AppealRepo.findOne(appeal_id);
+    const { payOrder, out_refund_no } = appealInfo;
+    let { out_trade_no, total_fee } = payOrder;
+
+    let result = await WxPayApi.refund({
+      out_trade_no,
+      out_refund_no: out_refund_no,
+      total_fee,
+      refund_fee: total_fee /* 全额退款 */
+    });
+
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg, result);
+  }
+
+  /**
+   * @api {post} /api/admin/rejectCase 拒绝申诉
+   * @apiGroup Admin
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async rejectAppealCase(ctx: Context) {
+    const {
+      appeal_id,
+      case_id,
+      changeStatus,
+      rejectReson,
+      client_id,
+      lawyer_id
+    } = ctx.request.body;
+
+    const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
+    const CaseOrderRepo = this.getRepository<Case>(Case);
+    const AppealRepo = this.getRepository<Appeal>(Appeal);
+    const BalanceRepo = this.getRepository<Balance>(Balance);
+
+    // TO DO: 消息推送
+    const appealInfo = <Appeal>await AppealRepo.findOne(appeal_id);
+    const { payOrder } = appealInfo;
+    let { total_fee } = payOrder;
+
+    await AppealRepo.update(appeal_id, {
+      status: AppealStatus.reject,
+      rejectReson: rejectReson
+    });
+
+    payOrder &&
+      (await PayOrderRepo.update(payOrder.id, {
+        pay_status: PayOrderStatus.cancel
+      }));
+
+    await CaseOrderRepo.update(case_id, {
+      status: changeStatus
+    });
+
+    /* 更新律师钱包 */
+    if (changeStatus === CaseStatus.cancel) {
+      const balance = await BalanceRepo.findOne(lawyer_id);
+      await BalanceRepo.update(lawyer_id, {
+        totalBalance: Number(balance.totalBalance) + Number(total_fee || 0)
+      });
+    }
+
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg);
+  }
+
+  /**
    * @api {post} /api/admin/userList 获取所有用户列表
    * @apiGroup Admin
    *
@@ -316,7 +476,8 @@ export default class AdminService {
     const ClientUser = this.getRepository<User>(User);
 
     const result = await ClientUser.find({
-      where: { verify_status: UserVerifyStatus.applyVerify }
+      where: { verify_status: MoreThan(1) },
+      relations: ["extra_profile"]
     });
 
     let { code, msg } = RES.SUCCESS;

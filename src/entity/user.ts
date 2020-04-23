@@ -25,7 +25,6 @@ export default class User {
   id: number;
 
   @Column()
-  @Index()
   openid: string;
 
   @Column({ default: null })
@@ -39,6 +38,9 @@ export default class User {
 
   @Column({ default: 0 })
   role: number; // 0 => null role, 1 => customer, 2 => lawyer
+
+  @Column({ default: null })
+  phone: string;
 
   @Column({ default: UserVerifyStatus.init })
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证

@@ -13,7 +13,7 @@ import { getManager, Repository, getRepository } from "typeorm";
 import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
 
-import * as Config from "../../config.js";
+import * as Config from "../../config/config.json";
 import User from "@src/entity/user.ts";
 import Appeal from "@src/entity/case-appeal";
 import Balance from "@src/entity/user-balance";

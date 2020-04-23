@@ -1,7 +1,7 @@
 import { Context } from "koa";
 import * as fs from "fs";
 import { ResponseCode } from "@src/constant";
-import * as Config from "../../config.js";
+import * as Config from "../../config/config.json";
 
 import * as COS from "cos-nodejs-sdk-v5";
 

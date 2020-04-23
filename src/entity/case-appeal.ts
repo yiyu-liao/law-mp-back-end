@@ -43,6 +43,9 @@ export default class CaseAppeal {
   @Column({ default: AppealStatus.pending })
   status: number;
 
+  @Column({ default: "" })
+  rejectReson: string;
+
   @CreateDateColumn({ type: "timestamp" })
   createTime: string;
 }
