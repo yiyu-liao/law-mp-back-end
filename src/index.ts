@@ -1,4 +1,5 @@
 import "reflect-metadata";
+
 import * as Koa from "koa";
 import { configure, getLogger } from "log4js";
 import { createConnection } from "typeorm";
@@ -16,7 +17,7 @@ import OrderService from "@src/service/order";
 
 import ErrorHander from "@src/middleware/ErrorHander";
 
-const publicKey = fs.readFileSync(path.join(__dirname, "../publicKey.pub"));
+import config from "@src/config";
 
 createConnection()
   .then(async connection => {
@@ -56,13 +57,15 @@ createConnection()
 
     app.use(ErrorHander);
     app.use(KoaStatic("assets", path.resolve(__dirname, "../assets")));
-    app.use(
-      jwt({ secret: publicKey }).unless({
-        path: [
-          /^\/api\/user\/authSession|\/api\/admin\/login|\/api\/order\/payCallback|\/api\/order\/refundCallback/
-        ]
-      })
-    );
+    if (process.env.NODE_ENV !== "dev") {
+      app.use(
+        jwt({ secret: config.jwt.secret }).unless({
+          path: [
+            /^\/api\/user\/authSession|\/api\/admin\/login|\/api\/order\/payCallback|\/api\/order\/refundCallback/
+          ]
+        })
+      );
+    }
     app.use(
       koaBody({
         multipart: true,

@@ -22,6 +22,11 @@ const pay = [
     action: OrderService.applyRefund
   },
   {
+    path: "/order/cancelAppeal",
+    method: "post",
+    action: OrderService.cancelAppeal
+  },
+  {
     path: "/order/applyWithdrawal",
     method: "post",
     action: OrderService.applyWithdrawal

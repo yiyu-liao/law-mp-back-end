@@ -1,11 +1,12 @@
 import { Context } from "koa";
 import { getManager, Repository, getRepository, MoreThan } from "typeorm";
 import UserAdmin from "@src/entity/user-admin";
-import User from "@src/entity/user.ts";
+import User from "@src/entity/user";
 import Appeal from "@src/entity/case-appeal";
 import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
 import Balance from "@src/entity/user-balance";
+import SwiperImage from "@src/entity/swiper";
 import {
   UserVerifyStatus,
   AdminMenu,
@@ -19,11 +20,10 @@ import {
 } from "@src/constant";
 
 import * as dayjs from "dayjs";
-dayjs.locale();
 
 import OrderService from "@src/service/order";
 
-import WxService from "./wx";
+import WxService from "./weixin";
 
 import {
   createHttpResponse,
@@ -36,7 +36,7 @@ import {
 import fs = require("fs");
 import path = require("path");
 import jwt = require("jsonwebtoken");
-const publicKey = fs.readFileSync(path.join(__dirname, "../../publicKey.pub"));
+import config from "@src/config";
 
 export default class AdminService {
   static getRepository<T>(target: any): Repository<T> {
@@ -44,7 +44,7 @@ export default class AdminService {
   }
 
   static createToken(data): string {
-    const token = jwt.sign(data, publicKey, { expiresIn: "2h" });
+    const token = jwt.sign(data, config.jwt.secret, { expiresIn: "2h" });
     return token;
   }
 
@@ -74,12 +74,9 @@ export default class AdminService {
       let isCorrect = await comparePasword(password, user.password);
 
       if (isCorrect) {
-        await UserRepo.update(
-          {
-            id: user.id
-          },
-          { lastLoginTime: dayjs().format("LLL") }
-        );
+        await UserRepo.update(user.id, {
+          lastLoginTime: dayjs().format("YYYY-MM-DD HH:mm:ss")
+        });
 
         let { code, msg } = RES.SUCCESS;
         delete user.password;
@@ -443,6 +440,12 @@ export default class AdminService {
     return createHttpResponse(code, msg, result);
   }
 
+  /**
+   * @api {post} /api/admin/getClientVerifyUserList 获取申请律师申请验证列表
+   * @apiGroup Admin
+   *
+   * @apiSuccess {String} code S_Ok
+   */
   static async getClientVerifyUserList(ctx: Context) {
     const ClientUser = this.getRepository<User>(User);
 
@@ -453,5 +456,48 @@ export default class AdminService {
 
     let { code, msg } = RES.SUCCESS;
     return createHttpResponse(code, msg, result);
+  }
+
+  /**
+   * @api {get} /api/admin/getSwiperImages 获取首页swiper滑动图片列表
+   * @apiGroup Admin
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getSwiperImages() {
+    const SwiperImageRepo = this.getRepository<SwiperImage>(SwiperImage);
+    const result = await SwiperImageRepo.find();
+
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg, result);
+  }
+
+  /**
+   * @api {post} /api/admin/updateSwiperImages 更新首页swiper滑动图片列表
+   * @apiGroup Admin
+   * @apiParam {Number} uid 图片uid
+   * @apiParam {Number} url 图片url
+   * @apiParam {Number} isDelete 是否移除
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async updateSwiperImages(ctx?: Context) {
+    const SwiperImageRepo = this.getRepository<SwiperImage>(SwiperImage);
+    const { uid, url, isDelete } = ctx.request.body;
+
+    if (isDelete) {
+      await SwiperImageRepo.delete({
+        uid
+      });
+    } else {
+      const source = SwiperImageRepo.create({
+        uid,
+        url
+      });
+      await SwiperImageRepo.save(source);
+    }
+
+    let { code, msg } = RES.SUCCESS;
+    return createHttpResponse(code, msg);
   }
 }

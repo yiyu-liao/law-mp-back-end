@@ -94,7 +94,7 @@
 
 2.订单状态通知
 授权时机：发布成功需求
-触发接口：/case/updateStatus
+触发接口：/case/updateCaseInfo, status change
 
 3.推送咨询回复（微信只支持单次消息订阅推送，无法实现，故移除）
 状态：新的回复内容
@@ -105,7 +105,7 @@
 律师：
 
 1.对于用户支付成功后，通知对应报价律师 (done)
-触发接口：/case/updateStatus，status => 2
+触发接口：/case/updateCaseInfo, status change
 
 2.客户申诉通知 (done)
 触发接口：/order/payCallback

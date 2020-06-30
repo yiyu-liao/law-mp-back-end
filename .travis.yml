@@ -1,0 +1,29 @@
+sudo: false
+language: node_js
+node_js:
+
+- 12
+branches:
+  only:
+  - master
+before_install:
+- openssl aes-256-cbc -K $encrypted_f9015e76815a_key -iv $encrypted_f9015e76815a_iv -in id_rsa.enc -out ~/.ssh/id_rsa -d
+- chmod 600 ~/.ssh/id_rsa
+- echo -e "Host $PROD_SERVER_IP\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+install:
+- npm install pm2 -g
+- npm install
+script:
+- npm run build
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: "$GH_TOKEN"
+  keep_history: true
+  target_branch: DEPLOY-PROD
+  committer_from_gh: true
+  on:
+    branch: master
+  local_dir: dist
+after_deploy:
+- pm2 deploy ecosystem.config.js production update --force

@@ -1,5 +1,5 @@
 import { Context } from "koa";
-import tenPay = require("@src/shared/lib/index");
+import * as tenPay from "tenpay-v2";
 import {
   ResponseCode as Res,
   PayOrderStatus,
@@ -13,21 +13,19 @@ import { getManager, Repository, getRepository } from "typeorm";
 import PayOrder from "@src/entity/case-order";
 import Case from "@src/entity/case";
 
-import * as Config from "../../config/config.json";
-import User from "@src/entity/user.ts";
+import User from "@src/entity/user";
 import Appeal from "@src/entity/case-appeal";
 import Balance from "@src/entity/user-balance";
 import HttpException from "@src/shared/http-exception";
+import config from "@src/config";
 
 import * as fs from "fs";
 import * as path from "path";
 
-import WxService from "./wx";
+import WxService from "./weixin";
 
-const pfxPath = path.join(__dirname, "../../pfx/apiclient_cert.p12");
+const pfxPath = path.join(__dirname, "../config/apiclient_cert.p12");
 const pfx = fs.readFileSync(pfxPath);
-
-import * as util from "@src/shared/payUtil";
 
 export default class OrderService {
   static getRepository<T>(target: any): Repository<T> {
@@ -37,9 +35,9 @@ export default class OrderService {
   static async initWxPay() {
     // @ts-ignore
     const payApi = new tenPay({
-      appid: Config["wx"].appid,
-      mchid: Config["wx"].mchid,
-      partnerKey: Config["wx"].partnerKey,
+      appid: config.weixin.appid,
+      mchid: config.weixin.mchid,
+      partnerKey: config.weixin.partnerKey,
       pfx,
       notify_url: "https://huaronghr.com/api/order/payCallback",
       refund_url: "https://huaronghr.com/api/order/refundCallback"
@@ -56,7 +54,7 @@ export default class OrderService {
    * @apiParam {String} body 支付case简单描述
    * @apiParam {Number} total_fee 支付金额，单位为分，如需支付0.1元，total_fee为100
    * @apiParam {String} openid 当前支付用户openid
-   * @apiParam {String} select_lawyer_id 选中律师openid
+   * @apiParam {String} select_lawyer_id 选中律师id
    * @apiParam {Number} case_id 当前支付订单case_id
    *
    * @apiSuccess {String} code S_Ok
@@ -86,10 +84,11 @@ export default class OrderService {
 
     let targetCase = new Case();
     targetCase.id = case_id;
-    // targetCase.select_lawyer_id = select_lawyer_id;
-    await CaseOrderRepo.update(case_id, {
-      select_lawyer_id
-    });
+    let targetLawyer = new User();
+    targetLawyer.id = select_lawyer_id;
+    targetCase.selectLawyer = targetLawyer;
+
+    await CaseOrderRepo.update(case_id, targetCase);
 
     // TO Review: review 新建PayOrder是否有意义
     const pay = PayOrderRepo.create({
@@ -147,7 +146,7 @@ export default class OrderService {
       status: CaseStatus.processing
     });
 
-    const { select_lawyer_id, case_type } = payOrder.case;
+    const { selectLawyer, case_type } = payOrder.case;
 
     const caseType =
       (case_type === 1 && "文书起草") ||
@@ -155,12 +154,10 @@ export default class OrderService {
       (case_type === 3 && "法律顾问") ||
       (case_type === 3 && "案件查询");
 
-    const lawyerInfo = await UserRepo.findOne(select_lawyer_id);
-
     await WxService.sendCaseStatusUpdate({
       caseStatus: "客户已完成支付",
       comment: `[${caseType}]报价抢单成功，请及时处理`,
-      touser: lawyerInfo.openid,
+      touser: selectLawyer.openid,
       page: "/"
     });
 
@@ -187,7 +184,7 @@ export default class OrderService {
 
     let appeal: Appeal = await AppealRepo.findOne({
       where: { out_refund_no: xmlData.out_refund_no },
-      relations: ["case", "payOrder", "case.publisher"]
+      relations: ["case", "payOrder", "case.publisher", "case.selectLawyer"]
     });
 
     if (!appeal) {
@@ -207,8 +204,8 @@ export default class OrderService {
       status: CaseStatus.cancel
     });
 
-    const case_type = appeal.case.case_type;
-    const caseType =
+    const { case_type, selectLawyer, publisher } = appeal.case;
+    const caseRealType =
       (case_type === 1 && "文书起草") ||
       (case_type === 2 && "案件委托") ||
       (case_type === 3 && "法律顾问") ||
@@ -216,17 +213,17 @@ export default class OrderService {
 
     await WxService.sendCaseStatusUpdate({
       caseStatus: "申诉成功",
-      comment: `[${caseType}]申诉成功，所支付费用已退回钱包。`,
-      touser: appeal.case.publisher.openid,
+      comment: `[${caseRealType}]申诉成功，所支付费用已退回钱包。`,
+      touser: publisher.openid,
       page: "/"
     });
 
-    const relateLawer = await UserRepo.findOne(appeal.case.select_lawyer_id);
+    // const relateLawer = await UserRepo.findOne(appeal.case.select_lawyer_id);
 
     await WxService.sendCaseStatusUpdate({
       caseStatus: "客户申诉成功",
-      comment: `[${caseType}]客户申诉成功, 订单已取消。`,
-      touser: relateLawer.openid,
+      comment: `[${caseRealType}]客户申诉成功, 订单已取消。`,
+      touser: selectLawyer.openid,
       page: "/"
     });
 
@@ -241,14 +238,21 @@ export default class OrderService {
    * @apiParam {String} case_id 案件id
    * @apiParam {String} appealer_id 申诉人id
    * @apiParam {String} reason 申诉理由
+   * @apiParam {Number} pre_appeal_status 申诉前的状态
    *
    * @apiSuccess {String} code S_Ok
    */
   static async applyRefund(ctx: Context) {
-    const { case_id, appealer_id, reason, url_route } = ctx.request.body;
+    const {
+      case_id,
+      appealer_id,
+      reason,
+      url_route,
+      pre_appeal_status
+    } = ctx.request.body;
 
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
-    const CaseOrderRepo = this.getRepository<Case>(Case);
+    const CaseRepo = this.getRepository<Case>(Case);
     const UserRepo = this.getRepository<User>(User);
     const AppealRepo = this.getRepository<Appeal>(Appeal);
 
@@ -265,35 +269,46 @@ export default class OrderService {
       .where("order.case_id = :case_id", { case_id })
       .getOne();
 
-    await CaseOrderRepo.update(case_id, {
-      status: CaseStatus.appeal
+    await CaseRepo.update(case_id, {
+      status: CaseStatus.appeal,
+      pre_appeal_status
     });
 
-    let refundCase = await CaseOrderRepo.findOne(case_id);
+    let refundCase = await CaseRepo.findOne(case_id, {
+      relations: ["appeal", "selectLawyer"]
+    });
     let appealer = await UserRepo.findOne(appealer_id);
 
-    let appealOrder = AppealRepo.create({
-      out_refund_no: generateTradeNumber(),
-      reason,
-      payOrder,
-      case: refundCase,
-      appealer
-    });
+    if (refundCase.appeal) {
+      const date = new Date().getTime().toString();
+      await AppealRepo.update(refundCase.appeal.id, {
+        status: AppealStatus.pending,
+        createTime: date
+      });
+    } else {
+      let appealOrder = AppealRepo.create({
+        out_refund_no: generateTradeNumber(),
+        reason,
+        payOrder,
+        case: refundCase,
+        appealer
+      });
 
-    await AppealRepo.save(appealOrder);
+      await AppealRepo.save(appealOrder);
+    }
 
-    const { select_lawyer_id, case_type } = refundCase;
+    const { selectLawyer, case_type } = refundCase;
 
-    const lawyerInfo = await UserRepo.findOne(select_lawyer_id);
     const caseType =
       (case_type === 1 && "文书起草") ||
       (case_type === 2 && "案件委托") ||
       (case_type === 3 && "法律顾问") ||
       (case_type === 3 && "案件查询");
+
     await WxService.sendCaseStatusUpdate({
       caseStatus: "客户发起申诉，等待后台管理员审核情况",
       comment: `[${caseType}]${reason}`,
-      touser: lawyerInfo.openid,
+      touser: selectLawyer.openid,
       page: url_route
     });
 
@@ -305,7 +320,40 @@ export default class OrderService {
   }
 
   /**
-   * @api {post} /order/withdrawal 律师申请提现
+   * @api {post} /order/cancelAppeal 客户取消申诉
+   * @apiName cancelAppeal
+   * @apiGroup WxPay
+   *
+   * @apiParam {Number} case_id 订单ID
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async cancelAppeal(ctx: Context) {
+    const { case_id } = ctx.request.body;
+
+    const CaseRepo = this.getRepository<Case>(Case);
+    const AppealRepo = this.getRepository<Appeal>(Appeal);
+
+    const relatedCase = await CaseRepo.findOne(case_id, {
+      relations: ["appeal"]
+    });
+
+    await CaseRepo.update(case_id, {
+      status: relatedCase.pre_appeal_status
+    });
+    await AppealRepo.update(relatedCase.appeal.id, {
+      status: AppealStatus.cancel
+    });
+
+    return {
+      code: Res.SUCCESS.code,
+      data: null,
+      message: Res.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /order/applyWithdrawal 律师申请提现
    * @apiName withdrawal
    * @apiGroup WxPay
    *
@@ -362,26 +410,28 @@ export default class OrderService {
    * @apiName confirmOrder
    * @apiGroup WxPay
    *
-   * @apiParam {out_trade_no} out_trade_no 支付订单out_trade_no
+   * @apiParam {case_id} case_id 订单id
    *
    * @apiSuccess {String} code S_Ok
    */
-  static async confirmOrder(ctx: Context) {
-    const { out_trade_no } = ctx.request.body;
+  static async confirmOrder(ctx?: Context | any) {
+    const { case_id } = ctx.request.body;
     const PayOrderRepo = this.getRepository<PayOrder>(PayOrder);
     const BalanceRepo = this.getRepository<Balance>(Balance);
     const relatedCase = this.getRepository<Case>(Case);
     const UserRepo = this.getRepository<User>(User);
 
     let payOrder: PayOrder = await PayOrderRepo.findOne({
-      where: { out_trade_no },
-      relations: ["case"]
+      where: { case_id },
+      relations: ["case", "case.selectLawyer"]
     });
-    const targetLawyerId = payOrder.case.select_lawyer_id;
+
+    const { id: caseID, selectLawyer } = payOrder.case;
+
     const orderIncome = payOrder.total_fee;
 
     let lawyerBalance = await BalanceRepo.findOne({
-      where: { ownerId: targetLawyerId }
+      where: { ownerId: selectLawyer.id }
     });
 
     let { id: balanceId, totalBalance } = lawyerBalance;
@@ -394,11 +444,10 @@ export default class OrderService {
       pay_status: PayOrderStatus.complete
     });
 
-    await relatedCase.update(payOrder.case.id, {
+    await relatedCase.update(caseID, {
       status: CaseStatus.complete
     });
 
-    const { openid } = await UserRepo.findOne(payOrder.case.select_lawyer_id);
     const { case_type } = payOrder.case;
 
     const caseType =
@@ -406,10 +455,11 @@ export default class OrderService {
       (case_type === 2 && "案件委托") ||
       (case_type === 3 && "法律顾问") ||
       (case_type === 3 && "案件查询");
+
     await WxService.sendCaseStatusUpdate({
-      caseStatus: "客户已确认订单",
+      caseStatus: `客户已确认订单`,
       comment: `[${caseType}]涉及律师费用更新到钱包`,
-      touser: openid,
+      touser: selectLawyer.openid,
       page: "/"
     });
 

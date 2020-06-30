@@ -15,6 +15,5 @@
       "@src/*": ["src/*"]
     }
   },
-  "exclude": ["node_modules"]
-  // "include": ["ormconfig.json"]
+  "exclude": ["node_modules", "doc"]
 }

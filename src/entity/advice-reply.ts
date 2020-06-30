@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn
 } from "typeorm";
-import LegalAdvice from "./advice";
+import Adivce from "./advice";
 import User from "./user";
 
 @Entity()
@@ -38,9 +38,9 @@ export default class AdviceReply {
   to: User;
 
   @ManyToOne(
-    type => LegalAdvice,
+    type => Adivce,
     adivice => adivice.replies
   )
   @JoinColumn({ name: "advice_id" })
-  advice: LegalAdvice;
+  advice: Adivce;
 }

@@ -7,7 +7,7 @@ import HttpException from "@src/shared/http-exception";
 
 import Advice from "@src/entity/advice";
 import AdviceReply from "@src/entity/advice-reply";
-import WxService from "./wx";
+import WxService from "./weixin";
 import User from "@src/entity/user";
 
 export default class AdviceService {

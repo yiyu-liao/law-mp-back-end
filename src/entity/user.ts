@@ -14,7 +14,7 @@ import { UserVerifyStatus } from "@src/constant";
 
 import Lawyer from "./user-lawyer-meta";
 import LegalAdvice from "./advice";
-import Order from "./case";
+import Case from "./case";
 import AdviceReply from "./advice-reply";
 import Bidders from "./case-bidder";
 import CaseAppeal from "./case-appeal";
@@ -42,6 +42,9 @@ export default class User {
   @Column({ default: null })
   phone: string;
 
+  @Column({ default: null })
+  WXnum: string;
+
   @Column({ default: UserVerifyStatus.init })
   verify_status: number; // 1 => 未认证， 2 => 认证中， 3 => 已认证
 
@@ -63,10 +66,16 @@ export default class User {
   advices: LegalAdvice[];
 
   @OneToMany(
-    type => Order,
-    order => order.publisher
+    type => Case,
+    relatedCase => relatedCase.selectLawyer
   )
-  publisher: Order[];
+  selected_lawyer_case: Case[];
+
+  @OneToMany(
+    type => Case,
+    relatedCase => relatedCase.publisher
+  )
+  publisher: Case[];
 
   @OneToMany(
     type => AdviceReply,

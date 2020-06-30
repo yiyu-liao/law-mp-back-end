@@ -2,11 +2,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
   ManyToOne,
   JoinColumn,
-  Index,
-  OneToOne
+  Index
 } from "typeorm";
 import Case from "./case";
 import { PayOrderStatus } from "@src/constant";

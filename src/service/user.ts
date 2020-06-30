@@ -6,12 +6,12 @@ import Balance from "@src/entity/user-balance";
 import jwt = require("jsonwebtoken");
 import fs = require("fs");
 import path = require("path");
-const publicKey = fs.readFileSync(path.join(__dirname, "../../publicKey.pub"));
+import config from "@src/config";
 
 import { ResponseCode } from "@src/constant";
 import HttpException from "@src/shared/http-exception";
 
-import WxService from "./wx";
+import WxService from "./weixin";
 
 export default class UserService {
   static getRepository<T>(target: any): Repository<T> {
@@ -34,19 +34,19 @@ export default class UserService {
       user_info: { nickName, avatarUrl }
     } = context.request.body;
 
-    const {
-      data: { openid, errcode, errmsg }
-    } = await WxService.authCode2Session(js_code);
+    const { data } = await WxService.authCode2Session(js_code);
+
+    const { errorcode, openid, errmsg } = data;
 
     const token = jwt.sign(
       {
         nick_name: nickName
       },
-      publicKey,
-      { expiresIn: "3d" }
+      config.jwt.secret,
+      config.jwt.options
     );
 
-    if (!errcode) {
+    if (!errorcode) {
       const userRepo = this.getRepository<User>(User);
       const balanceRepo = this.getRepository<Balance>(Balance);
 
@@ -80,7 +80,7 @@ export default class UserService {
       }
     } else {
       return {
-        code: errcode,
+        code: errorcode,
         message: errmsg
       };
     }
@@ -243,14 +243,22 @@ export default class UserService {
       throw new HttpException(error);
     }
 
-    let result = await getRepository(User)
-      .createQueryBuilder("user")
-      .where("user.id = :user_id", { user_id })
-      .leftJoinAndSelect("user.create_replies", "create_replies")
-      .leftJoinAndSelect("user.receive_replies", "receive_replies")
-      .leftJoinAndSelect("create_replies.advice", "create_advice")
-      .leftJoinAndSelect("receive_replies.advice", "reply_advice")
-      .getMany();
+    const userRepo = this.getRepository<User>(User);
+
+    let result = await userRepo.find({
+      where: {
+        id: user_id
+      },
+      join: {
+        alias: "user",
+        leftJoinAndSelect: {
+          create_replies: "user.create_replies",
+          receive_replies: "user.receive_replies",
+          create_advice: "create_replies.advice",
+          reply_advice: "receive_replies.advice"
+        }
+      }
+    });
 
     return {
       code: ResponseCode.SUCCESS.code,

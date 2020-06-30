@@ -1,9 +1,9 @@
 import { Context } from "koa";
 import * as fs from "fs";
 import { ResponseCode } from "@src/constant";
-import * as Config from "../../config/config.json";
 
 import * as COS from "cos-nodejs-sdk-v5";
+import config from "@src/config";
 
 import { createHttpResponse } from "@src/shared";
 
@@ -29,8 +29,8 @@ export default class File {
     }
 
     const cos = new COS({
-      SecretId: Config["cos"].SecretId,
-      SecretKey: Config["cos"].SecretKey
+      SecretId: config.cos.SecretId,
+      SecretKey: config.cos.SecretKey
     });
 
     const upload = (file): Promise<String> => {

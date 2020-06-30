@@ -62,6 +62,16 @@ const Admin = [
     method: "post",
     action: AdminController.clientVerifyUserList
   },
+  {
+    path: "/admin/getSwiperImages",
+    method: "get",
+    action: AdminController.getSwiperImages
+  },
+  {
+    path: "/admin/updateSwiperImages",
+    method: "post",
+    action: AdminController.updateSwiperImage
+  },
 
   {
     path: "/admin/getMenusById",

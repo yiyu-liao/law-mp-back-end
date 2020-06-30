@@ -37,6 +37,12 @@ export default class UserController {
   static async clientVerifyUserList(ctx) {
     ctx.body = await AdminService.getClientVerifyUserList(ctx);
   }
+  static async getSwiperImages(ctx) {
+    ctx.body = await AdminService.getSwiperImages();
+  }
+  static async updateSwiperImage(ctx) {
+    ctx.body = await AdminService.updateSwiperImages(ctx);
+  }
 
   static async getMenusById(ctx) {
     ctx.body = await AdminService.getMenusById(ctx);

@@ -5,13 +5,15 @@ import {
   JoinColumn,
   Column,
   CreateDateColumn,
-  OneToMany
+  OneToMany,
+  OneToOne
 } from "typeorm";
 
 import Bidders from "./case-bidder";
 import User from "./user";
 import { CaseStatus } from "@src/constant";
 import CasePayOrder from "./case-order";
+import CaseAppeal from "./case-appeal";
 
 // export interface IExtraInfo {
 //   description?: string;
@@ -33,9 +35,6 @@ export default class Case {
   @JoinColumn({ name: "publisher_id" })
   publisher: User;
 
-  @Column({ default: null })
-  select_lawyer_id: string;
-
   @Column() // 案件类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
   case_type: number;
 
@@ -44,6 +43,12 @@ export default class Case {
 
   @Column({ default: CaseStatus.bidding })
   status: number;
+
+  @Column({ default: null })
+  pre_appeal_status: number;
+
+  @Column({ default: null })
+  auto_confirm_time: string;
 
   @OneToMany(
     type => Bidders,
@@ -56,6 +61,19 @@ export default class Case {
     payOrder => payOrder.case
   )
   payOrder: CasePayOrder[];
+
+  @ManyToOne(
+    type => User,
+    user => user.selected_lawyer_case
+  )
+  @JoinColumn({ name: "select_lawyer_id" })
+  selectLawyer: User;
+
+  @OneToOne(
+    type => CaseAppeal,
+    appeal => appeal.case
+  )
+  appeal: CaseAppeal;
 
   @CreateDateColumn({ type: "timestamp" })
   create_time: string;

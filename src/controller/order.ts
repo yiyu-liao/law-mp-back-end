@@ -13,6 +13,9 @@ export default class OrderController {
   static async applyRefund(ctx) {
     ctx.body = await OrderService.applyRefund(ctx);
   }
+  static async cancelAppeal(ctx) {
+    ctx.body = await OrderService.cancelAppeal(ctx);
+  }
   static async applyWithdrawal(ctx) {
     ctx.body = await OrderService.applyWithdrawal(ctx);
   }

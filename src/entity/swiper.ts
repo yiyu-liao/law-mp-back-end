@@ -5,6 +5,9 @@ export default class swiper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  url: number;
+  @Column({ default: null })
+  uid: string;
+
+  @Column({ default: null })
+  url: string;
 }

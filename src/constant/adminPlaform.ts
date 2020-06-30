@@ -2,64 +2,64 @@
 const AdminMenu = [
   {
     id: 1,
-    title: "首页",
+    title: "订单管理",
     icon: "icon-home",
     url: "/home",
     parent: null,
-    desc: "首页",
-    sorts: 0,
+    desc: "订单管理",
+    sorts: 1,
     conditions: 1
   },
+  // {
+  //   id: 2,
+  //   title: "系统管理",
+  //   icon: "icon-setting",
+  //   url: "/system",
+  //   parent: null,
+  //   desc: "系统管理目录分支",
+  //   sorts: 1,
+  //   conditions: 1
+  // },
   {
     id: 2,
-    title: "系统管理",
-    icon: "icon-setting",
-    url: "/system",
+    title: "认证管理",
+    icon: "icon-team",
+    url: "/roleAdmin",
     parent: null,
-    desc: "系统管理目录分支",
-    sorts: 1,
+    desc: "认证管理",
+    sorts: 2,
     conditions: 1
   },
   {
     id: 3,
-    title: "用户管理",
-    icon: "icon-user",
-    url: "/useradmin",
-    parent: 2,
-    desc: "系统管理/用户管理",
-    sorts: 0,
+    title: "申诉管理",
+    icon: "icon-safetycertificate",
+    url: "/appealAdmin",
+    parent: null,
+    desc: "申诉管理",
+    sorts: 3,
     conditions: 1
   },
   {
     id: 4,
-    title: "认证管理",
-    icon: "icon-team",
-    url: "/roleadmin",
-    parent: 2,
-    desc: "系统管理/认证管理",
-    sorts: 1,
+    title: "滑动照片管理",
+    icon: "icon-appstore",
+    url: "/swiperAdmin",
+    parent: null,
+    desc: "滑动照片管理",
+    sorts: 4,
     conditions: 1
   },
   {
     id: 5,
-    title: "申诉管理",
-    icon: "icon-safetycertificate",
-    url: "/appealAdmin",
-    parent: 2,
-    desc: "系统管理/申诉管理",
-    sorts: 2,
+    title: "用户管理",
+    icon: "icon-user",
+    url: "/userAdmin",
+    parent: null,
+    desc: "用户管理",
+    sorts: 5,
     conditions: 1
   }
-  // {
-  //   id: 6,
-  //   title: "菜单管理",
-  //   icon: "icon-appstore",
-  //   url: "/menuadmin",
-  //   parent: 2,
-  //   desc: "系统管理/菜单管理",
-  //   sorts: 3,
-  //   conditions: 1
-  // }
 ];
 
 // 所有的权限数据

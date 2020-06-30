@@ -1,8 +1,7 @@
 import Axios from "axios";
-import * as Config from "../../config/config.json";
+import config from "@src/config";
 
 import * as dayjs from "dayjs";
-dayjs().locale();
 
 import { getManager, Repository, LessThan, Like, MoreThan } from "typeorm";
 
@@ -57,8 +56,8 @@ export default class WxService {
     return Axios.get(url, {
       params: {
         grant_type: "authorization_code",
-        appid: Config["wx"].appid,
-        secret: Config["wx"].appSecret,
+        appid: config.weixin.appid,
+        secret: config.weixin.appSecret,
         js_code
       }
     });
@@ -70,8 +69,8 @@ export default class WxService {
     return Axios.get(url, {
       params: {
         grant_type: "client_credential",
-        appid: Config["wx"].appid,
-        secret: Config["wx"].appSecret
+        appid: config.weixin.appid,
+        secret: config.weixin.appSecret
       }
     });
   }
@@ -85,14 +84,14 @@ export default class WxService {
     return Axios.post(url, {
       access_token: ACCESS_TOKEN,
       touser: payload.touser,
-      template_id: Config["wx"]["message_template"]["case_status_update"],
+      template_id: config.weixin["message_template"]["case_status_update"],
       page: payload.page,
       data: {
         phrase1: {
           value: payload.caseStatus
         },
         date2: {
-          value: dayjs().format("LLL")
+          value: dayjs().format("YYYY-MM-DD HH:mm:ss")
         },
         thing3: {
           value: payload.comment
@@ -110,7 +109,7 @@ export default class WxService {
     return Axios.post(url, {
       access_token: ACCESS_TOKEN,
       touser: payload.touser,
-      template_id: Config["wx"]["message_template"]["verfiy_feedback"],
+      template_id: config.weixin["message_template"]["verfiy_feedback"],
       page: payload.page,
       data: {
         thing1: {
@@ -123,34 +122,6 @@ export default class WxService {
     });
   }
 
-  // static async sendMessageToLawyerWhenUserApplyRefund(payload: IMessageToLawyerApplyRefund) {
-  //   const { data } = await this.getAccessToken();
-  //   const ACCESS_TOKEN = data.access_token;
-
-  //   if (!ACCESS_TOKEN) return;
-  //   const url = `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${ACCESS_TOKEN}`;
-  //   return Axios.post(url, {
-  //     access_token: ACCESS_TOKEN,
-  //     touser: payload.touser,
-  //     template_id: Config["wx"]["message_template"][""],
-  //     page: payload.page,
-  //     data: {
-  //       character_string1: {
-  //         value: payload.orderNo // 订单号
-  //       },
-  //       thing2: {
-  //         value: payload.username // 申请人
-  //       },
-  //       thing3: {
-  //         value: payload.caseType // 申请类型
-  //       },
-  //       amount4: {
-  //         value: payload.amount // 申请金额
-  //       }
-  //     }
-  //   });
-  // }
-
   static async sendRefundResultFeedback(payload: IRejectRefund) {
     const { data } = await this.getAccessToken();
     const ACCESS_TOKEN = data.access_token;
@@ -161,7 +132,7 @@ export default class WxService {
     return Axios.post(url, {
       access_token: ACCESS_TOKEN,
       touser: payload.touser,
-      template_id: Config["wx"]["message_template"]["refund_feedback"],
+      template_id: config.weixin["message_template"]["refund_feedback"],
       page: payload.page,
       data: {
         character_string1: {

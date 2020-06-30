@@ -12,6 +12,16 @@ const Case = [
     action: CaseServer.bidCase
   },
   {
+    path: "/case/updateBidPrice",
+    method: "post",
+    action: CaseServer.updateBidPrice
+  },
+  {
+    path: "/case/cancelBid",
+    method: "post",
+    action: CaseServer.cancelBid
+  },
+  {
     path: "/case/list",
     method: "post",
     action: CaseServer.getCaseList
@@ -27,19 +37,19 @@ const Case = [
     action: CaseServer.getLawyerList
   },
   {
+    path: "/case/lawyerBidCaseList",
+    method: "post",
+    action: CaseServer.getLawyerBidCaseList
+  },
+  {
     path: "/case/detail",
     method: "post",
     action: CaseServer.getCaseDetail
   },
   {
-    path: "/case/selectBidder",
+    path: "/case/updateCaseInfo",
     method: "post",
-    action: CaseServer.selectBidder
-  },
-  {
-    path: "/case/updateStatus",
-    method: "post",
-    action: CaseServer.changeCaseStatus
+    action: CaseServer.updateCaseInfo
   }
 ];
 

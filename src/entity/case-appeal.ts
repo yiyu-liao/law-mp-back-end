@@ -22,7 +22,7 @@ export default class CaseAppeal {
   @Index()
   out_refund_no: string;
 
-  @Column()
+  @Column({ default: "" })
   reason: string;
 
   @OneToOne(type => Case)
@@ -46,6 +46,6 @@ export default class CaseAppeal {
   @Column({ default: "" })
   rejectReson: string;
 
-  @CreateDateColumn({ type: "timestamp" })
+  @CreateDateColumn()
   createTime: string;
 }

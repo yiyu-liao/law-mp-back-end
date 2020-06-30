@@ -1,5 +1,5 @@
 import { Context } from "koa";
-import { getManager, Repository, getRepository } from "typeorm";
+import { getManager, Repository, getRepository, In } from "typeorm";
 
 import Case from "@src/entity/case";
 import Bidders from "@src/entity/case-bidder";
@@ -9,6 +9,8 @@ import { CaseStatus } from "@src/constant";
 import { ResponseCode } from "@src/constant";
 import HttpException from "@src/shared/http-exception";
 import User from "@src/entity/user";
+
+import * as dayjs from "dayjs";
 
 export default class OrderService {
   static getRepository<T>(target: any): Repository<T> {
@@ -105,29 +107,34 @@ export default class OrderService {
    * @apiName getCaseList
    * @apiGroup Case
    *
-   * @apiParam {Number} type  1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
+   * @apiParam {Number} type case类型，1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
+   * @apiParam {Number} status  case状态
    *
    * @apiSuccess {String} code S_Ok
    */
   static async getCaseList(context?: Context) {
-    const { type } = context.request.body;
+    const { type, status } = context.request.body;
 
-    if (!type) {
-      const error = {
-        code: ResponseCode.ERROR_PARAMS.code,
-        message: ResponseCode.ERROR_PARAMS.msg
-      };
-      throw new HttpException(error);
-    }
+    const caseRepo = this.getRepository<Case>(Case);
 
-    let result = await getRepository(Case)
-      .createQueryBuilder("case")
-      .where("case.case_type = :type", { type })
-      .andWhere("case.status = :status", { status: CaseStatus.bidding })
-      .leftJoinAndSelect("case.bidders", "bidder")
-      .leftJoinAndSelect("bidder.lawyer", "lawyer")
-      .leftJoinAndSelect("case.publisher", "publisher")
-      .getMany();
+    let result = await caseRepo.find({
+      where: {
+        case_type: In(type !== undefined ? [type] : [1, 2, 3, 4]),
+        status: In(status !== undefined ? [status] : [0, 1, 2, 3, 4, 5, 6])
+      },
+      join: {
+        alias: "case",
+        leftJoinAndSelect: {
+          publisher: "case.publisher",
+          selectLawyer: "case.selectLawyer",
+          bidder: "case.bidders",
+          lawyer: "bidder.lawyer"
+        }
+      },
+      order: {
+        create_time: "DESC"
+      }
+    });
 
     return {
       code: ResponseCode.SUCCESS.code,
@@ -167,6 +174,54 @@ export default class OrderService {
         { customer_id }
       )
       .leftJoinAndSelect("case.bidders", "bidder")
+      .orderBy({
+        "case.create_time": "DESC"
+      })
+      .getMany();
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: result,
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /case/lawyerBidCaseList 获取律师参与竞价的订单list
+   * @apiName lawyerBidCaseList
+   * @apiGroup Case
+   *
+   * @apiParam {String} lawyer_id 律师id
+   * @apiParam {Number} type  订单类型 1 => 文书起草，2 => 案件委托， 3 => 法律顾问， 4 => 案件查询
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async getLawyerBidCaseList(context?: Context) {
+    const { lawyer_id, type } = context.request.body;
+
+    if (!lawyer_id) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    let result = await getRepository(Case)
+      .createQueryBuilder("case")
+      .where("case.status = :status", { status: CaseStatus.bidding })
+      .andWhere("case.case_type = :type", { type })
+      .innerJoinAndSelect(
+        "case.bidders",
+        "bidder",
+        "bidder.lawyer_id = :lawyer_id",
+        {
+          lawyer_id
+        }
+      )
+      .leftJoinAndSelect("bidder.lawyer", "lawyer")
+      .leftJoinAndSelect("case.publisher", "publisher")
+      .orderBy("case.create_time", "DESC")
       .getMany();
 
     return {
@@ -197,19 +252,23 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
+    const caseRepo = this.getRepository<Case>(Case);
+
     let result = await getRepository(Case)
       .createQueryBuilder("case")
       .where("case.case_type = :type", { type })
       .innerJoinAndSelect(
-        "case.bidders",
-        "bidder",
-        "bidder.lawyer_id = :lawyer_id",
+        "case.selectLawyer",
+        "selectLawyer",
+        "selectLawyer.id = :lawyer_id",
         {
           lawyer_id
         }
       )
-      .leftJoinAndSelect("bidder.lawyer", "lawyer")
       .leftJoinAndSelect("case.publisher", "publisher")
+      .leftJoinAndSelect("case.bidders", "bidder")
+      .leftJoinAndSelect("bidder.lawyer", "lawyer")
+      .orderBy("case.create_time", "DESC")
       .getMany();
 
     return {
@@ -239,100 +298,140 @@ export default class OrderService {
       throw new HttpException(error);
     }
 
-    let caseInfo = await getRepository(Case)
-      .createQueryBuilder("case")
-      .where("case.id = :case_id", { case_id })
-      .leftJoinAndSelect("case.publisher", "publisher")
-      .leftJoinAndSelect("case.bidders", "bidder")
-      .leftJoinAndSelect("bidder.lawyer", "lawyer")
-      .leftJoinAndSelect("lawyer.extra_profile", "bidderMeta")
-      .getOne();
+    const caseRepo = this.getRepository<Case>(Case);
 
-    let detail: any = {
-      ...caseInfo
-    };
-
-    if (caseInfo.select_lawyer_id) {
-      const Repo = this.getRepository<User>(User);
-      const selectLawyer = await Repo.findOne(caseInfo.select_lawyer_id, {
-        relations: ["extra_profile"]
-      });
-      detail.selectLawyer = selectLawyer;
-    }
-
-    return {
-      code: ResponseCode.SUCCESS.code,
-      data: detail,
-      message: ResponseCode.SUCCESS.msg
-    };
-  }
-
-  /**
-   * @api {post} /case/selectBidder 客户选中报价律师
-   * @apiName selectBidder
-   * @apiGroup Case
-   *
-   * @apiParam {Number} case_id  案件id.
-   * @apiParam {Number} select_lawyer_id  选中服务律师的id.
-   *
-   * @apiSuccess {String} code S_Ok
-   */
-  static async selectBidder(context?: Context) {
-    const Repo = this.getRepository<Case>(Case);
-
-    const { case_id, select_lawyer_id } = context.request.body;
-
-    if (!case_id || !select_lawyer_id) {
-      const error = {
-        code: ResponseCode.ERROR_PARAMS.code,
-        message: ResponseCode.ERROR_PARAMS.msg
-      };
-      throw new HttpException(error);
-    }
-
-    let targetCase = Repo.create({
-      select_lawyer_id,
-      status: CaseStatus.pending
+    let caseInfo = await caseRepo.findOne({
+      where: {
+        id: case_id
+      },
+      join: {
+        alias: "case",
+        leftJoinAndSelect: {
+          publisher: "case.publisher",
+          payOrder: "case.payOrder",
+          bidder: "case.bidders",
+          lawyer: "bidder.lawyer",
+          bidderMeta: "lawyer.extra_profile",
+          selectLawyer: "case.selectLawyer",
+          lawyerMeta: "selectLawyer.extra_profile"
+        }
+      }
     });
-    const res = await Repo.update(case_id, targetCase);
+
     return {
       code: ResponseCode.SUCCESS.code,
-      data: res,
+      data: caseInfo,
       message: ResponseCode.SUCCESS.msg
     };
   }
 
   /**
-   * @api {post} /case/updateStatus 更新order状态
-   * @apiName updateStatus
+   * @api {post} /case/updateCaseInfo 更新case信息
+   * @apiName updateCaseInfo
    * @apiGroup Case
    *
    * @apiParam {Number} case_id  案件id.
    * @apiParam {Number} status  状态值. 抢单中 => 0, 待处理 => 1, 处理中 = 2, 完成 => 3, 申诉 => 4, 取消 => 5
+   * @apiParam {Number} extra_info  case信息，json结构，更新时候需要把全部字段传进来
    *
    * @apiSuccess {String} code S_Ok
    */
-  static async changeCaseStatus(ctx?: Context) {
+  static async updateCaseInfo(ctx?: Context) {
     const Repo = this.getRepository<Case>(Case);
 
-    const { case_id, status } = ctx.request.body;
+    const { case_id, status, extra_info } = ctx.request.body;
 
-    // To Review, 判定状态流改变规则
-    // const orderInfo  = await orderRepo.findOne(case_id);
-
-    if (!status) {
+    if (!status && !extra_info) {
       const error = {
         code: ResponseCode.ERROR_PARAMS.code,
         message: ResponseCode.ERROR_PARAMS.msg
       };
       throw new HttpException(error);
     }
-    await Repo.update(case_id, {
-      status
-    });
+    if (status !== undefined) {
+      const auto_confirm_time = dayjs()
+        .add(5, "day")
+        .format("YYYY-MM-DD HH:mm:ss");
+      await Repo.update(case_id, {
+        status,
+        auto_confirm_time:
+          status === CaseStatus.pendingConfirm ? auto_confirm_time : null
+      });
+    }
+    if (extra_info !== undefined) {
+      await Repo.update(case_id, {
+        extra_info: JSON.parse(extra_info)
+      });
+    }
+
     return {
       code: ResponseCode.SUCCESS.code,
-      data: null,
+      data: {},
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /case/updateBidPrice 更新律师竞价金额
+   * @apiName updateBidPrice
+   * @apiGroup Case
+   *
+   * @apiParam {Number} bid_id  竞价id.
+   * @apiParam {Number} price  价钱
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async updateBidPrice(ctx?: Context) {
+    const { bid_id, price } = ctx.request.body;
+
+    if (!bid_id || !price) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    const BidderRepo = this.getRepository<Bidders>(Bidders);
+
+    await BidderRepo.update(bid_id, {
+      price
+    });
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: {},
+      message: ResponseCode.SUCCESS.msg
+    };
+  }
+
+  /**
+   * @api {post} /case/cancelBid 取消竞价
+   * @apiName cancelBid
+   * @apiGroup Case
+   *
+   * @apiParam {Number} bid_id  竞价id.
+   *
+   * @apiSuccess {String} code S_Ok
+   */
+  static async cancelBid(ctx?: Context) {
+    const { bid_id } = ctx.request.body;
+
+    if (!bid_id) {
+      const error = {
+        code: ResponseCode.ERROR_PARAMS.code,
+        message: ResponseCode.ERROR_PARAMS.msg
+      };
+      throw new HttpException(error);
+    }
+
+    const BidderRepo = this.getRepository<Bidders>(Bidders);
+
+    await BidderRepo.delete(bid_id);
+
+    return {
+      code: ResponseCode.SUCCESS.code,
+      data: {},
       message: ResponseCode.SUCCESS.msg
     };
   }
